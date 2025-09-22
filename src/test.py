@@ -25,7 +25,7 @@ if response.status_code == 200:
     for k,v in place.items():
         print(k,v)
 else:
-    print("Error:", response.status_code, response.text)
+    pass
 
 
 
