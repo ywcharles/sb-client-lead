@@ -1,0 +1,16 @@
+id ChIJp33ENHhTwokRbgeEgIJGBUY
+types ['book_store', 'point_of_interest', 'store', 'establishment']
+nationalPhoneNumber (973) 824-2556
+rating 4.8
+googleMapsUri https://maps.google.com/?cid=5045516483854337902&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA
+websiteUri http://sourceofknowledgebookstore.com/
+businessStatus OPERATIONAL
+userRatingCount 245
+displayName {'text': 'Source of Knowledge Book Store', 'languageCode': 'en'}
+reviewSummary {'text': 
+    {'text': 'People say this bookstore offers a wide selection of books for adults and children. 
+    They highlight the great place to browse without feeling rushed and the one-stop shopping for holiday gifts. 
+    They also like the friendly and knowledgeable staff.', 
+    'languageCode': 'en-US'}, 
+    'flagContentUri': 'https://www.google.com/local/review/rap/report?postId=5%401:CAIQACodChtyc19oOi03a1dJdmpXcFp5d2t6R2toLVlVRGc%7CCAIQACorChtyc19oOi03a1dJdmpXcFp5d2t6R2toLVlVRGcSDAif-sLGBhD4tviKAw&d=17924085&t=8', 'disclosureText': {'text': 'Summarized with Gemini', 'languageCode': 'en-US'}, 'reviewsUri': 'https://www.google.com/maps/place//data=!4m4!3m3!1s0x89c2537834c47da7:0x460546828084076e!9m1!1b1'
+}
