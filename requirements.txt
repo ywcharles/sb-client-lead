@@ -2,3 +2,4 @@ dotenv
 requests
 pytest
 openpyxl
+beautifulsoup4

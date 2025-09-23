@@ -40,13 +40,16 @@ class PlaceParser:
             results = data.get("places", [])
             for place in results:
                 if place["id"] not in self.places:
+                    print(f'    FOUND: {place["id"]}')
                     self.places[place["id"]] = Place(place)
         else:
             print("Error:", response.status_code, response.text)
 
     def mass_search(self, queries: List[str]):
         for q in queries:
+            print(f'__Searching for {q}__')
             self.search(q)
+            print(f'__Done searching for {q}__')
 
     def export_excel(self, filename: str = "places.xlsx"):
         wb = Workbook()
@@ -65,6 +68,7 @@ class PlaceParser:
             "website",
             "google_maps_uri",
             "review_summary",
+            "emails",
             "lead_score",
         ]
         ws.append(headers)
@@ -83,6 +87,7 @@ class PlaceParser:
                     place.website_uri or "",
                     place.google_maps_uri or "",
                     place.review_summary or "",
+                    ", ".join(place.emails),
                     place.lead_score,
                 ]
             )
@@ -92,33 +97,4 @@ class PlaceParser:
 
 
 if __name__ == "__main__":
-    sample_queries = [
-        "small business Bergen County NJ",
-        "local business Bergen County NJ",
-        "shop Bergen County NJ",
-        "store Bergen County NJ",
-        "retail Bergen County NJ",
-        "boutique Bergen County NJ",
-        "artisan Bergen County NJ",
-        "handmade Bergen County NJ",
-        "crafts Bergen County NJ",
-        "gift shop Bergen County NJ",
-        "bakery Bergen County NJ",
-        "cafe Bergen County NJ",
-        "restaurant Bergen County NJ",
-        "florist Bergen County NJ",
-        "jewelry Bergen County NJ",
-        "home decor Bergen County NJ",
-        "toy store Bergen County NJ",
-        "stationery Bergen County NJ",
-        "beauty salon Bergen County NJ",
-        "barber shop Bergen County NJ",
-        "fitness studio Bergen County NJ",
-        "gallery Bergen County NJ",
-        "thrift store Bergen County NJ",
-        "clothing store Bergen County NJ",
-        "market Bergen County NJ",
-    ]
-    p = PlaceParser()
-    p.mass_search(sample_queries)
-    p.export_excel()
+    pass
