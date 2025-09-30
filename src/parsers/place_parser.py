@@ -69,7 +69,7 @@ class PlaceParser:
             "google_maps_uri",
             "review_summary",
             "emails",
-            "lead_score",
+            "lead_score"
         ]
         ws.append(headers)
 

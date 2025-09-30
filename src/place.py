@@ -1,4 +1,4 @@
-from email_parser import EmailParser as ep
+from parsers.email_parser import EmailParser as ep
 
 class Place:
     def __init__(self, place):
