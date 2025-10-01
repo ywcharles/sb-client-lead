@@ -1,3 +1,4 @@
+from agents.leads_agent import LeadsAgent
 from parsers.place_parser import PlaceParser
 
 # sample_queries = [
@@ -31,4 +32,12 @@ from parsers.place_parser import PlaceParser
 p = PlaceParser()
 p.search("gift shop Bergen County NJ")
 places = list(p.places.values())
-print(places[0])
+agent = LeadsAgent()
+summary = agent.base_model.invoke(
+    input=f"""
+{places[0]}
+Given this information about this business. Create a summary describing the model
+"""
+)
+
+print(summary.content)

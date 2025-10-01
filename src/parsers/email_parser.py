@@ -2,9 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-EMAIL_REGEX = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}"
+EMAIL_REGEX = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
 
 class EmailParser:
+    @staticmethod
     def extract_emails(url):
         try:
             response = requests.get(url, timeout=5)
@@ -18,13 +19,15 @@ class EmailParser:
                     email = a["href"].replace("mailto:", "").split("?")[0]
                     emails.add(email)
 
-            # 2. If no mailto found, fallback to regex
+            # 2. Regex fallback
             if not emails:
                 text = soup.get_text(" ", strip=True)
                 found = re.findall(EMAIL_REGEX, text)
-                emails.update(found)
+                # Clean bad matches
+                cleaned = [e.strip(" ,;:.") for e in found if e and "@" in e]
+                emails.update(cleaned)
 
-            return list(emails) if emails else []
+            return list(emails)
 
-        except Exception as e:
+        except Exception:
             return []
