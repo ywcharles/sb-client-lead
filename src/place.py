@@ -1,3 +1,5 @@
+import math
+
 from parsers.website_parser import WebsiteParser as wp
 
 class Place:
@@ -57,18 +59,14 @@ class Place:
         if self.business_status == "OPERATIONAL":
             raw_score += 3
         elif self.business_status == "CLOSED_PERMANENTLY":
-            return 0.0  
+            return 0.0
 
-        # Reputation
-        if self.rating:
-            raw_score += self.rating * 1.5
-        if self.user_rating_count:
-            if self.user_rating_count > 100:
-                raw_score += 3
-            elif self.user_rating_count > 20:
-                raw_score += 2
-            elif self.user_rating_count > 0:
-                raw_score += 1
+        # Friction Index (reviews x low rating)
+        if self.rating and self.user_rating_count:
+            friction = (5 - self.rating) * math.log(1 + self.user_rating_count, 10)
+            raw_score += friction * 2  # weight it stronger than raw rating
+        elif self.rating:
+            raw_score += (5 - self.rating)
 
         # Online visibility
         if self.review_summary:
@@ -78,7 +76,11 @@ class Place:
         if self.website_uri:
             raw_score += 2
 
-        # Normalize
-        max_score = 18.5
+        # Emails
+        if self.emails:
+            raw_score += 2
+
+        # Normalize to 5
+        max_score = 20  # adjust if weights increase
         normalized = min(5, (raw_score / max_score) * 5)
         return round(normalized, 2)
