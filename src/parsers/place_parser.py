@@ -41,7 +41,6 @@ class PlaceParser:
             for place in results:
                 if place["id"] not in self.places:
                     print(f'    FOUND: {place["id"]}')
-                    print(place)
                     p = Place(place)
                     if len(p.emails) > 0: # eliminate places with no emails
                         self.places[place["id"]] = p

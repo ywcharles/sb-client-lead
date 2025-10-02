@@ -1,5 +1,6 @@
 from agents.leads_agent import LeadsAgent
 from parsers.place_parser import PlaceParser
+from parsers.website_parser import WebsiteParser as wp
 
 import os
 import re
@@ -42,14 +43,13 @@ def sanitize_filename(name: str) -> str:
 p = PlaceParser()
 p.search("gift shop Bergen County NJ")
 places = list(p.places.values())
-p.export_excel()
 
-# for place in places:
-#     safe_name = sanitize_filename(place.display_name)
-#     file_path = f"./places/{safe_name}.pkl"
-#     with open(file_path, "wb") as f:
-#         pickle.dump(place, f)
-#     print(f"✅ Saved {place.display_name} -> {file_path}")
+for place in places:
+    safe_name = sanitize_filename(place.display_name)
+    file_path = f"./places/{safe_name}.pkl"
+    with open(file_path, "wb") as f:
+        pickle.dump(place, f)
+    print(f"✅ Saved {place.display_name} -> {file_path}")
 
 
 # with open("./places/Love___Box.pkl", 'rb') as file:
@@ -58,5 +58,3 @@ p.export_excel()
 # agent = LeadsAgent()
 # pain_points = agent.generate_pain_points(place)
 # print(pain_points)
-
-
