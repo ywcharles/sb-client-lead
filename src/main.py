@@ -40,21 +40,21 @@ def sanitize_filename(name: str) -> str:
     """Replace illegal filename chars with underscores"""
     return re.sub(r'[^a-zA-Z0-9_-]', "_", name)
 
-p = PlaceParser()
-p.search("gift shop Bergen County NJ")
-places = list(p.places.values())
+# p = PlaceParser()
+# p.search("gift shop Bergen County NJ")
+# places = list(p.places.values())
 
-for place in places:
-    safe_name = sanitize_filename(place.display_name)
-    file_path = f"./places/{safe_name}.pkl"
-    with open(file_path, "wb") as f:
-        pickle.dump(place, f)
-    print(f"✅ Saved {place.display_name} -> {file_path}")
+# for place in places:
+#     safe_name = sanitize_filename(place.display_name)
+#     file_path = f"./places/{safe_name}.pkl"
+#     with open(file_path, "wb") as f:
+#         pickle.dump(place, f)
+#     print(f"✅ Saved {place.display_name} -> {file_path}")
 
 
-# with open("./places/Love___Box.pkl", 'rb') as file:
-#     place = pickle.load(file)
+with open("./places/Love___Box.pkl", 'rb') as file:
+    place = pickle.load(file)
 
-# agent = LeadsAgent()
-# pain_points = agent.generate_pain_points(place)
-# print(pain_points)
+agent = LeadsAgent()
+report = agent.generate_ui_report(place.website_uri)
+print(report)

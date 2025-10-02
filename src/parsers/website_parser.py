@@ -1,6 +1,11 @@
 import requests
-from bs4 import BeautifulSoup
+import os
 import re
+
+from bs4 import BeautifulSoup
+
+from playwright.sync_api import sync_playwright
+
 
 EMAIL_REGEX = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
 ROLE_BASED_PREFIXES = {
@@ -50,7 +55,31 @@ class WebsiteParser:
             response = requests.get(url, timeout=5)
             soup = BeautifulSoup(response.text, "html.parser")
 
-            return soup.text
+            return str(soup)
 
-        except Exception:
+        except Exception:   
             return "Failed to extract HTML contents"
+        
+    @staticmethod
+    def take_screenshot(url, full_page=True):
+        try:
+            # Make sure screenshot folder exists
+            screenshot_dir = os.path.join(os.getcwd(), "screenshots")
+            os.makedirs(screenshot_dir, exist_ok=True)
+
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(url, timeout=15000)
+
+                # Safe filename from title (remove invalid chars)
+                title = page.title() or "screenshot"
+                safe_title = "".join(c for c in title if c.isalnum() or c in (" ", "-", "_")).rstrip()
+                output_file = os.path.join(screenshot_dir, f"{safe_title}.png")
+
+                page.screenshot(path=output_file, full_page=full_page)
+                browser.close()
+
+            return output_file
+        except Exception as e:
+            return f"Failed to take screenshot: {e}"

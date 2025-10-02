@@ -1,9 +1,11 @@
 from langchain_openai import ChatOpenAI
+from openai import OpenAI
 from dotenv import load_dotenv
+
 from parsers.website_parser import WebsiteParser as wp
 
 import os
-
+import base64
 from place import Place
 
 load_dotenv()
@@ -13,21 +15,47 @@ OPEN_AI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class LeadsAgent:
     def __init__(self):
-        self.base_model = ChatOpenAI(model="gpt-4o", api_key=OPEN_AI_API_KEY)
+        self.base_model = OpenAI(api_key=OPEN_AI_API_KEY)
 
-    def generate_pain_points(self, place: Place):
-        prompt = f"""
-You are a consultancy company looking for new clients. 
-You offer StudentBrains offers = automation (ops, sales, support), website redesign, consulting (org/process), bookkeeping/accounting.
+    def generate_ui_report(self, url: str):
+        """
+        Analyze only UI improvements for the given website.
+        Saves a screenshot of the site and sends it to the AI for analysis.
+        """
+        try:
+            # Take screenshot
+            screenshot_path = wp.take_screenshot(url)
+            with open(screenshot_path, "rb") as image_file:
+                image_64 = base64.b64encode(image_file.read()).decode("utf-8")
+            # Prompt for UI analysis only
+            prompt = """
+    You are an experienced web developer and UI designer.
 
-Given the business below
-Business: {place.display_name}
-Types: {', '.join(place.types)}
-Google Maps Reviews Summary: {place.review_summary}
-Website content: {wp.extract_html_contents(place.website_uri)}
+    Analyze the website screenshot.
+    Focus only on **UI improvements** (design, layout, accessibility, usability).
+    If there are no UI improvements, simply output "NO IMPROVEMENTS".
+    """
 
-Identify painpoints or area of improvement within the business that could benefit from your services.
-Only output issues you can identify with confidence. Do not make assumptions
-"""
-        resp = self.base_model.invoke(prompt)
-        return resp.content.strip()
+            resp = self.base_model.responses.create(
+                model="gpt-4.1",
+                input=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "input_text", "text": prompt},
+                            {
+                                "type": "input_image",
+                                "image_url": f"data:image/jpeg;base64,{image_64}",
+                            },
+                        ],
+                    }
+                ]
+            )
+
+            return resp.output_text
+
+        except Exception as e:
+            return {
+                "ui_report": f"Failed to generate UI report: {e}",
+                "screenshot": None,
+            }
