@@ -1,6 +1,10 @@
 from agents.leads_agent import LeadsAgent
 from parsers.place_parser import PlaceParser
 
+import os
+import re
+import pickle
+
 # sample_queries = [
 #         "small business Bergen County NJ",
 #         "local business Bergen County NJ",
@@ -29,15 +33,30 @@ from parsers.place_parser import PlaceParser
 #         "market Bergen County NJ",
 #     ]
 
+os.makedirs("./places", exist_ok=True)
+
+def sanitize_filename(name: str) -> str:
+    """Replace illegal filename chars with underscores"""
+    return re.sub(r'[^a-zA-Z0-9_-]', "_", name)
+
 p = PlaceParser()
 p.search("gift shop Bergen County NJ")
 places = list(p.places.values())
-agent = LeadsAgent()
-summary = agent.base_model.invoke(
-    input=f"""
-{places[0]}
-Given this information about this business. Create a summary describing the model
-"""
-)
+p.export_excel()
 
-print(summary.content)
+# for place in places:
+#     safe_name = sanitize_filename(place.display_name)
+#     file_path = f"./places/{safe_name}.pkl"
+#     with open(file_path, "wb") as f:
+#         pickle.dump(place, f)
+#     print(f"✅ Saved {place.display_name} -> {file_path}")
+
+
+# with open("./places/Love___Box.pkl", 'rb') as file:
+#     place = pickle.load(file)
+
+# agent = LeadsAgent()
+# pain_points = agent.generate_pain_points(place)
+# print(pain_points)
+
+

@@ -1,4 +1,4 @@
-from parsers.email_parser import EmailParser as ep
+from parsers.website_parser import WebsiteParser as wp
 
 class Place:
     def __init__(self, place):
@@ -10,8 +10,17 @@ class Place:
         self.website_uri = place.get("websiteUri")
         self.business_status = place.get("businessStatus")
         self.user_rating_count = place.get("userRatingCount")
-        self.display_name = place.get("displayName").get("text")
-        self.review_summary = place.get("reviewSummary", {}).get("text", {}).get("text")
+        self.display_name = place.get("displayName", {}).get("text")
+        
+        # Fix reviews: ensure it's always a list of dicts
+        self.reviews = place.get("reviews", []) or []
+        # Review summary text
+        self.review_summary = (
+            place.get("reviewSummary", {})
+                 .get("text", {})
+                 .get("text")
+        )
+        
         self.emails = self.find_email()
         self.lead_score = self.score_place()
 
@@ -27,15 +36,16 @@ class Place:
             f"  Google Maps: {self.google_maps_uri}\n"
             f"  Review Summary: {self.review_summary or 'N/A'}\n"
             f"  Emails: {self.emails}\n"
-            f"  Lead Score: {self.lead_score} / 5.00"
+            f"  Lead Score: {self.lead_score} / 5.00\n"
+            f"  Reviews: {len(self.reviews)} found"
         )
     
     def find_email(self):
         print(f'        Looking for {self.display_name} email')
-        emails = ep.extract_emails(self.website_uri) if self.website_uri else [] # check for email if not empty list
+        emails = wp.extract_emails(self.website_uri) if self.website_uri else [] 
         
-        if len(emails) > 0:
-            print(f'        Email founds: {emails}')
+        if emails:
+            print(f'        Email found: {emails}')
         else:
             print(f'        No email found')
         return emails
@@ -43,19 +53,11 @@ class Place:
     def score_place(self):
         raw_score = 0
 
-        # Contactability
-        if self.national_phone_number:
-            raw_score += 3
-        if self.website_uri:
-            raw_score += 2
-        if len(self.emails) > 0:  # assumes self.emails is a list or None
-            raw_score += 5  # emails are high-priority for outreach
-
         # Business status
         if self.business_status == "OPERATIONAL":
             raw_score += 3
         elif self.business_status == "CLOSED_PERMANENTLY":
-            return 0.0  # treat closed as lowest score
+            return 0.0  
 
         # Reputation
         if self.rating:
@@ -73,10 +75,10 @@ class Place:
             raw_score += 2
         if self.google_maps_uri:
             raw_score += 1
+        if self.website_uri:
+            raw_score += 2
 
-        # Normalize (cap at 5 just in case)
-        max_score = 26.5  # updated max to reflect extra email weight
+        # Normalize
+        max_score = 18.5
         normalized = min(5, (raw_score / max_score) * 5)
         return round(normalized, 2)
-
-

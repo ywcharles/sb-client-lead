@@ -7,7 +7,7 @@ from typing import List
 
 from place import Place
 
-DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary"
+DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
 load_dotenv()
 places_api_key = os.getenv("GOOGLE_API_KEY")
@@ -41,7 +41,10 @@ class PlaceParser:
             for place in results:
                 if place["id"] not in self.places:
                     print(f'    FOUND: {place["id"]}')
-                    self.places[place["id"]] = Place(place)
+                    print(place)
+                    p = Place(place)
+                    if len(p.emails) > 0: # eliminate places with no emails
+                        self.places[place["id"]] = p
         else:
             print("Error:", response.status_code, response.text)
 
@@ -68,13 +71,18 @@ class PlaceParser:
             "website",
             "google_maps_uri",
             "review_summary",
+            "reviews",
             "emails",
             "lead_score"
         ]
         ws.append(headers)
 
         # Write data rows
+       # Write data rows
         for place in self.places.values():
+            # Extract review texts only (limit to 3 to avoid Excel bloat)
+            review_texts = [r.get("text", {}).get("text", "") for r in place.reviews[:3]]
+            
             ws.append(
                 [
                     place.id,
@@ -87,11 +95,11 @@ class PlaceParser:
                     place.website_uri or "",
                     place.google_maps_uri or "",
                     place.review_summary or "",
+                    " | ".join(review_texts),   # new: compact review export
                     ", ".join(place.emails),
                     place.lead_score,
                 ]
             )
-
         # Save to file
         wb.save(filename)
 
