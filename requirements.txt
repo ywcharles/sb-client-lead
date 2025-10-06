@@ -3,3 +3,6 @@ requests
 pytest
 openpyxl
 beautifulsoup4
+langchain-openai
+langchain
+playwright

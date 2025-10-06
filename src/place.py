@@ -1,7 +1,9 @@
-from email_parser import EmailParser as ep
+import math
+
+from parsers.website_parser import WebsiteParser as wp
 
 class Place:
-    def __init__(self, place):
+    def __init__(self, place, leads_agent=None):
         self.id = place.get("id")
         self.types = place.get("types", [])
         self.national_phone_number = place.get("nationalPhoneNumber")
@@ -10,13 +12,64 @@ class Place:
         self.website_uri = place.get("websiteUri")
         self.business_status = place.get("businessStatus")
         self.user_rating_count = place.get("userRatingCount")
-        self.display_name = place.get("displayName").get("text")
-        self.review_summary = place.get("reviewSummary", {}).get("text", {}).get("text")
+        self.display_name = place.get("displayName", {}).get("text")
+        
+        # Fix reviews: ensure it's always a list of dicts
+        self.reviews = place.get("reviews", []) or []
+        # Review summary text
+        self.review_summary = (
+            place.get("reviewSummary", {})
+                 .get("text", {})
+                 .get("text")
+        )
+        
         self.emails = self.find_email()
         self.lead_score = self.score_place()
+        
+        # Generate AI reports if leads_agent is provided
+        self.ui_report = None
+        self.brief = None
+        self.pain_point_report = None
+        self.email_sample = None
+        
+        if leads_agent and self.website_uri and self.emails:
+            self.generate_reports(leads_agent)
+
+    def generate_reports(self, leads_agent):
+        """Generate all AI-powered reports for this place"""
+        print(f'        Generating reports for {self.display_name}...')
+        
+        try:
+            # Generate UI report
+            print(f'          - UI Report')
+            self.ui_report = leads_agent.generate_ui_report(self.website_uri)
+            
+            # Generate business brief
+            print(f'          - Business Brief')
+            self.brief = leads_agent.generate_business_brief(self.website_uri)
+            
+            # Generate pain point report (uses reviews)
+            print(f'          - Pain Point Report')
+            self.pain_point_report = leads_agent.generate_pain_points(
+                self.brief, 
+                self.ui_report, 
+                self.reviews[:5]  # Limit to 5 reviews
+            )
+            
+            # Generate personalized email
+            print(f'          - Email Sample')
+            self.email_sample = leads_agent.generate_personalized_email(
+                self.display_name,
+                self.brief,
+                self.pain_point_report
+            )
+            
+            print(f'        Reports generated successfully')
+        except Exception as e:
+            print(f'        Error generating reports: {e}')
 
     def __str__(self):
-        return (
+        base_info = (
             f"{self.display_name}\n"
             f"  ID: {self.id}\n"
             f"  Types: {', '.join(self.types)}\n"
@@ -27,15 +80,27 @@ class Place:
             f"  Google Maps: {self.google_maps_uri}\n"
             f"  Review Summary: {self.review_summary or 'N/A'}\n"
             f"  Emails: {self.emails}\n"
-            f"  Lead Score: {self.lead_score} / 5.00"
+            f"  Lead Score: {self.lead_score} / 5.00\n"
+            f"  Reviews: {len(self.reviews)} found\n"
         )
+        
+        if self.ui_report:
+            base_info += f"\n  UI Report Generated: Yes"
+        if self.brief:
+            base_info += f"\n  Brief Generated: Yes"
+        if self.pain_point_report:
+            base_info += f"\n  Pain Point Report Generated: Yes"
+        if self.email_sample:
+            base_info += f"\n  Email Sample Generated: Yes"
+            
+        return base_info
     
     def find_email(self):
         print(f'        Looking for {self.display_name} email')
-        emails = ep.extract_emails(self.website_uri) if self.website_uri else [] # check for email if not empty list
+        emails = wp.extract_emails(self.website_uri) if self.website_uri else [] 
         
-        if len(emails) > 0:
-            print(f'        Email founds: {emails}')
+        if emails:
+            print(f'        Email found: {emails}')
         else:
             print(f'        No email found')
         return emails
@@ -43,40 +108,32 @@ class Place:
     def score_place(self):
         raw_score = 0
 
-        # Contactability
-        if self.national_phone_number:
-            raw_score += 3
-        if self.website_uri:
-            raw_score += 2
-        if len(self.emails) > 0:  # assumes self.emails is a list or None
-            raw_score += 5  # emails are high-priority for outreach
-
         # Business status
         if self.business_status == "OPERATIONAL":
             raw_score += 3
         elif self.business_status == "CLOSED_PERMANENTLY":
-            return 0.0  # treat closed as lowest score
+            return 0.0
 
-        # Reputation
-        if self.rating:
-            raw_score += self.rating * 1.5
-        if self.user_rating_count:
-            if self.user_rating_count > 100:
-                raw_score += 3
-            elif self.user_rating_count > 20:
-                raw_score += 2
-            elif self.user_rating_count > 0:
-                raw_score += 1
+        # Friction Index (reviews x low rating)
+        if self.rating and self.user_rating_count:
+            friction = (5 - self.rating) * math.log(1 + self.user_rating_count, 10)
+            raw_score += friction * 2  # weight it stronger than raw rating
+        elif self.rating:
+            raw_score += (5 - self.rating)
 
         # Online visibility
         if self.review_summary:
             raw_score += 2
         if self.google_maps_uri:
             raw_score += 1
+        if self.website_uri:
+            raw_score += 2
 
-        # Normalize (cap at 5 just in case)
-        max_score = 26.5  # updated max to reflect extra email weight
+        # Emails
+        if self.emails:
+            raw_score += 2
+
+        # Normalize to 5
+        max_score = 20  # adjust if weights increase
         normalized = min(5, (raw_score / max_score) * 5)
         return round(normalized, 2)
-
-
