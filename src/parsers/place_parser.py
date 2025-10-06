@@ -5,6 +5,7 @@ from openpyxl import Workbook
 import os
 from typing import List
 
+from agents.leads_agent import LeadsAgent
 from place import Place
 
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
@@ -18,6 +19,7 @@ class PlaceParser:
     def __init__(self, field_mask: str = DEFAULT_FIELD_MASK):
         self.field_mask = field_mask
         self.places = {}
+        self.agent = LeadsAgent()
 
     def search(self, search_query: str):
         """
@@ -41,7 +43,7 @@ class PlaceParser:
             for place in results:
                 if place["id"] not in self.places:
                     print(f'    FOUND: {place["id"]}')
-                    p = Place(place)
+                    p = Place(place=place, leads_agent=self.agent)
                     if len(p.emails) > 0: # eliminate places with no emails
                         self.places[place["id"]] = p
         else:
@@ -72,7 +74,11 @@ class PlaceParser:
             "review_summary",
             "reviews",
             "emails",
-            "lead_score"
+            "lead_score",
+            "ui_report",
+            "brief",
+            "pain_point_report",
+            "email_sample"
         ]
         ws.append(headers)
 
@@ -97,6 +103,10 @@ class PlaceParser:
                     " | ".join(review_texts),   # new: compact review export
                     ", ".join(place.emails),
                     place.lead_score,
+                    place.ui_report,
+                    place.brief,
+                    place.pain_point_report,
+                    place.email_sample,
                 ]
             )
         # Save to file

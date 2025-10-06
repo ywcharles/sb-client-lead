@@ -3,7 +3,7 @@ import math
 from parsers.website_parser import WebsiteParser as wp
 
 class Place:
-    def __init__(self, place):
+    def __init__(self, place, leads_agent=None):
         self.id = place.get("id")
         self.types = place.get("types", [])
         self.national_phone_number = place.get("nationalPhoneNumber")
@@ -25,9 +25,51 @@ class Place:
         
         self.emails = self.find_email()
         self.lead_score = self.score_place()
+        
+        # Generate AI reports if leads_agent is provided
+        self.ui_report = None
+        self.brief = None
+        self.pain_point_report = None
+        self.email_sample = None
+        
+        if leads_agent and self.website_uri and self.emails:
+            self.generate_reports(leads_agent)
+
+    def generate_reports(self, leads_agent):
+        """Generate all AI-powered reports for this place"""
+        print(f'        Generating reports for {self.display_name}...')
+        
+        try:
+            # Generate UI report
+            print(f'          - UI Report')
+            self.ui_report = leads_agent.generate_ui_report(self.website_uri)
+            
+            # Generate business brief
+            print(f'          - Business Brief')
+            self.brief = leads_agent.generate_business_brief(self.website_uri)
+            
+            # Generate pain point report (uses reviews)
+            print(f'          - Pain Point Report')
+            self.pain_point_report = leads_agent.generate_pain_points(
+                self.brief, 
+                self.ui_report, 
+                self.reviews[:5]  # Limit to 5 reviews
+            )
+            
+            # Generate personalized email
+            print(f'          - Email Sample')
+            self.email_sample = leads_agent.generate_personalized_email(
+                self.display_name,
+                self.brief,
+                self.pain_point_report
+            )
+            
+            print(f'        Reports generated successfully')
+        except Exception as e:
+            print(f'        Error generating reports: {e}')
 
     def __str__(self):
-        return (
+        base_info = (
             f"{self.display_name}\n"
             f"  ID: {self.id}\n"
             f"  Types: {', '.join(self.types)}\n"
@@ -39,8 +81,19 @@ class Place:
             f"  Review Summary: {self.review_summary or 'N/A'}\n"
             f"  Emails: {self.emails}\n"
             f"  Lead Score: {self.lead_score} / 5.00\n"
-            f"  Reviews: {len(self.reviews)} found"
+            f"  Reviews: {len(self.reviews)} found\n"
         )
+        
+        if self.ui_report:
+            base_info += f"\n  UI Report Generated: Yes"
+        if self.brief:
+            base_info += f"\n  Brief Generated: Yes"
+        if self.pain_point_report:
+            base_info += f"\n  Pain Point Report Generated: Yes"
+        if self.email_sample:
+            base_info += f"\n  Email Sample Generated: Yes"
+            
+        return base_info
     
     def find_email(self):
         print(f'        Looking for {self.display_name} email')
