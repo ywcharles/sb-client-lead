@@ -7,6 +7,7 @@ from typing import List
 
 from agents.leads_agent import LeadsAgent
 from place import Place
+from tools.notion import export_place_to_notion
 
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
@@ -111,6 +112,10 @@ class PlaceParser:
             )
         # Save to file
         wb.save(filename)
+
+    def update_notion_with_places(self):
+        for place in self.places.values():
+            export_place_to_notion(place = place)
 
 
 if __name__ == "__main__":
