@@ -31,7 +31,7 @@ def filter_emails(emails):
     output_emails = []
     for mail in emails:
         name = mail.split("@")[0]
-        if name not in ROLE_BASED_PREFIXES:
+        if name not in ROLE_BASED_PREFIXES and mail != '':
             output_emails.append(mail)
 
     return output_emails

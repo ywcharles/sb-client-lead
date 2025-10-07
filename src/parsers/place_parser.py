@@ -1,3 +1,5 @@
+import random
+import time
 import requests
 from dotenv import load_dotenv
 from openpyxl import Workbook
@@ -7,6 +9,7 @@ from typing import List
 
 from agents.leads_agent import LeadsAgent
 from place import Place
+from tools.notion import Notion
 
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
@@ -17,9 +20,11 @@ places_api_url = os.getenv("GOOGLE_API_URL")
 
 class PlaceParser:
     def __init__(self, field_mask: str = DEFAULT_FIELD_MASK):
+        self.notion = Notion()
         self.field_mask = field_mask
         self.places = {}
         self.agent = LeadsAgent()
+        self.visited = self.notion.fetch_all_place_ids()
 
     def search(self, search_query: str):
         """
@@ -41,7 +46,7 @@ class PlaceParser:
             data = response.json()
             results = data.get("places", [])
             for place in results:
-                if place["id"] not in self.places:
+                if place["id"] not in self.places and place["id"] not in self.visited:
                     print(f'    FOUND: {place["id"]}')
                     p = Place(place=place, leads_agent=self.agent)
                     if len(p.emails) > 0: # eliminate places with no emails
@@ -111,6 +116,11 @@ class PlaceParser:
             )
         # Save to file
         wb.save(filename)
+
+    def update_notion_with_places(self):
+        for place in self.places.values():
+            self.notion.export_place(place = place)
+            time.sleep(random.uniform(0.4, 0.6)) 
 
 
 if __name__ == "__main__":

@@ -6,6 +6,12 @@ import os
 import re
 import pickle
 
+from tools.notion import Notion
+
+def sanitize_filename(name: str) -> str:
+    """Replace illegal filename chars with underscores"""
+    return re.sub(r'[^a-zA-Z0-9_-]', "_", name)
+
 sample_queries = [
         "small business Bergen County NJ",
         "local business Bergen County NJ",
@@ -35,39 +41,26 @@ sample_queries = [
     ]
 
 p = PlaceParser()
-p.search("small business Bergen County NJ")
-p.export_excel()
+p.mass_search(["gift shop Bergen County NJ"])
+p.update_notion_with_places()
+# places = list(p.places.values())
 
 # os.makedirs("./places", exist_ok=True)
 
-# def sanitize_filename(name: str) -> str:
-#     """Replace illegal filename chars with underscores"""
-#     return re.sub(r'[^a-zA-Z0-9_-]', "_", name)
-
-# # for place in places:
-# #     safe_name = sanitize_filename(place.display_name)
-# #     file_path = f"./places/{safe_name}.pkl"
-# #     with open(file_path, "wb") as f:
-# #         pickle.dump(place, f)
-# #     print(f"✅ Saved {place.display_name} -> {file_path}")
+# for place in places:
+#     safe_name = sanitize_filename(place.display_name)
+#     file_path = f"./places/{safe_name}.pkl"
+#     with open(file_path, "wb") as f:
+#         pickle.dump(place, f)
+#     print(f"✅ Saved {place.display_name} -> {file_path}")
 
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-# # with open("./places/Love___Box.pkl", 'rb') as file:
-# #     place = pickle.load(file)
+# with open("./places/Love___Box.pkl", 'rb') as file:
+#     place = pickle.load(file)
 
-# agent = LeadsAgent()
-# ui_report = agent.generate_ui_report(place.website_uri)
-# print(ui_report)
-# brief = agent.generate_business_brief(place.website_uri)
-# print(brief)
-# pain = agent.generate_pain_points(brief=brief, ui_report=ui_report, reviews=place.reviews)
-# print(pain)
-# email = agent.generate_personalized_email(business_name=place.display_name, brief=brief, pain_point_report=pain)
-# print(email)
-# # report = agent.generate_ui_report(place.website_uri)
-# # print(report)
-
-# # brief = agent.generate_business_brief(place.website_uri)
-# # print(brief)
+# notion = Notion()
+# ids = notion.fetch_all_place_ids()
+# print(ids)
+# notion.export_place(place)
