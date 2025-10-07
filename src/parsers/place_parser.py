@@ -1,3 +1,5 @@
+import random
+import time
 import requests
 from dotenv import load_dotenv
 from openpyxl import Workbook
@@ -118,6 +120,7 @@ class PlaceParser:
     def update_notion_with_places(self):
         for place in self.places.values():
             self.notion.export_place(place = place)
+            time.sleep(random.uniform(0.4, 0.6)) 
 
 
 if __name__ == "__main__":
