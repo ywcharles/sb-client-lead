@@ -22,6 +22,7 @@ class PlaceParser:
         self.field_mask = field_mask
         self.places = {}
         self.agent = LeadsAgent()
+        self.visited = self.notion.fetch_all_place_ids()
 
     def search(self, search_query: str):
         """
@@ -43,7 +44,7 @@ class PlaceParser:
             data = response.json()
             results = data.get("places", [])
             for place in results:
-                if place["id"] not in self.places:
+                if place["id"] not in self.places and place["id"] not in self.visited:
                     print(f'    FOUND: {place["id"]}')
                     p = Place(place=place, leads_agent=self.agent)
                     if len(p.emails) > 0: # eliminate places with no emails

@@ -61,4 +61,6 @@ p.update_notion_with_places()
 #     place = pickle.load(file)
 
 # notion = Notion()
+# ids = notion.fetch_all_place_ids()
+# print(ids)
 # notion.export_place(place)

@@ -6,9 +6,10 @@ from place import Place
 load_dotenv()
 
 class Notion:
-    def __init__(self, api_key=None, database_id=None):
+    def __init__(self, api_key=None, database_id=None, data_source_id=None):
         self.api_key = api_key or os.getenv("NOTION_API_KEY")
         self.database_id = database_id or os.getenv("NOTION_DATABASE_ID")
+        self.data_source_id = data_source_id or os.getenv("NOTION_DATA_SOURCE_ID")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -76,3 +77,39 @@ class Notion:
             print(f"✅ Created Notion page for {place.display_name}")
         else:
             print(f"❌ Error: {res.status_code} - {res.text}")
+
+    def fetch_all_place_ids(self):
+        url = f"https://api.notion.com/v1/data_sources/{self.data_source_id}/query"
+        place_ids = set()
+        payload = {"page_size": 100}
+        has_more = True
+        next_cursor = None
+
+        while has_more:
+            if next_cursor:
+                payload["start_cursor"] = next_cursor
+
+            res = requests.post(url=url, headers=self.headers, json=payload)
+            if res.status_code != 200:
+                print(f"❌ Error fetching place IDs: {res.status_code} - {res.text}")
+                break
+
+            data = res.json()
+            results = data.get("results", [])
+            for page in results:
+                try:
+                    # Extract the Google Place ID property safely
+                    prop = page["properties"].get("Google Place ID", {})
+                    text_list = prop.get("rich_text", [])
+                    if text_list:
+                        place_id = text_list[0]["text"]["content"].strip()
+                        if place_id:
+                            place_ids.add(place_id)
+                except Exception as e:
+                    print(f"⚠️ Error parsing place ID: {e}")
+
+            has_more = data.get("has_more", False)
+            next_cursor = data.get("next_cursor")
+
+        print(f"📦 Retrieved {len(place_ids)} existing place IDs from Notion data source.")
+        return place_ids
