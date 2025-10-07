@@ -6,7 +6,7 @@ import os
 import re
 import pickle
 
-from tools.notion import export_place_to_notion
+from tools.notion import Notion
 
 def sanitize_filename(name: str) -> str:
     """Replace illegal filename chars with underscores"""
@@ -40,8 +40,9 @@ sample_queries = [
         "market Bergen County NJ",
     ]
 
-# p = PlaceParser()
-# p.mass_search(["gift shop Bergen County NJ"])
+p = PlaceParser()
+p.mass_search(["gift shop Bergen County NJ"])
+p.update_notion_with_places()
 # places = list(p.places.values())
 
 # os.makedirs("./places", exist_ok=True)
@@ -56,7 +57,8 @@ sample_queries = [
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-with open("./places/Love___Box.pkl", 'rb') as file:
-    place = pickle.load(file)
+# with open("./places/Love___Box.pkl", 'rb') as file:
+#     place = pickle.load(file)
 
-export_place_to_notion(place)
+# notion = Notion()
+# notion.export_place(place)

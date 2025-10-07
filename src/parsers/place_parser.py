@@ -7,7 +7,7 @@ from typing import List
 
 from agents.leads_agent import LeadsAgent
 from place import Place
-from tools.notion import export_place_to_notion
+from tools.notion import Notion
 
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
@@ -18,6 +18,7 @@ places_api_url = os.getenv("GOOGLE_API_URL")
 
 class PlaceParser:
     def __init__(self, field_mask: str = DEFAULT_FIELD_MASK):
+        self.notion = Notion()
         self.field_mask = field_mask
         self.places = {}
         self.agent = LeadsAgent()
@@ -115,7 +116,7 @@ class PlaceParser:
 
     def update_notion_with_places(self):
         for place in self.places.values():
-            export_place_to_notion(place = place)
+            self.notion.export_place(place = place)
 
 
 if __name__ == "__main__":
