@@ -1,21 +1,19 @@
 import random
 import time
 import requests
-from dotenv import load_dotenv
 from openpyxl import Workbook
 
-import os
 from typing import List
 
 from agents.leads_agent import LeadsAgent
 from place import Place
+from tools.keys import get_secret
 from tools.notion import Notion
 
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
-load_dotenv()
-places_api_key = os.getenv("GOOGLE_API_KEY")
-places_api_url = os.getenv("GOOGLE_API_URL")
+places_api_key = get_secret("GOOGLE_API_KEY")
+places_api_url = get_secret("GOOGLE_API_URL")
 
 
 class PlaceParser:
