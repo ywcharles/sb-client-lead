@@ -86,38 +86,48 @@ if check_password():
         # Create parser instance
         parser = PlaceParser()
         
-        # Progress tracking
+       # Progress tracking
         progress_bar = st.progress(0)
         status_text = st.empty()
-        
-        # Results container
+
+        # Container for query results
         results_container = st.container()
-        
+
         with results_container:
             st.subheader("🔎 Search Progress")
-            
-            # Search each query
+
+            total_queries = len(queries)
+            total_leads_found = 0
+
             for idx, query in enumerate(queries):
-                progress = (idx + 1) / len(queries)
-                progress_bar.progress(progress)
-                status_text.text(f"Searching: {query} ({idx + 1}/{len(queries)})")
-                
-                # Create expander for this query
+                progress_bar.progress(idx / total_queries)
+                status_text.text(f"Searching query {idx + 1}/{total_queries}: {query}")
+
                 with st.expander(f"Query {idx + 1}: {query}", expanded=True):
                     search_start = time.time()
-                    
+
                     # Perform search
                     parser.search(query)
-                    
+
                     search_time = time.time() - search_start
-                    
-                    # Display results
-                    new_places = len(parser.places)
-                    st.success(f"✅ Completed in {search_time:.2f}s")
-                    st.metric("Total Places Found", new_places)
-            
+                    new_places = len(parser.places) - total_leads_found
+                    total_leads_found = len(parser.places)
+
+                    st.success(f"✅ Query completed in {search_time:.2f}s")
+                    st.metric("Leads Found This Query", new_places)
+                    st.metric("Total Leads Found", total_leads_found)
+
+            # Final updates after all queries
             progress_bar.progress(1.0)
-            status_text.text("✅ All searches completed!")
+            status_text.success("✅ All queries completed!")
+
+        # Exporting to Notion (with a spinner)
+        with st.spinner("Exporting leads to Notion..."):
+            try:
+                parser.update_notion_with_places()
+                st.success(f"✅ {len(parser.places)} leads exported successfully!")
+            except Exception as e:
+                st.error(f"❌ Error exporting to Notion: {str(e)}")
         
         # Summary
         st.divider()
