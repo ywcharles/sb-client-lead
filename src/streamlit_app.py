@@ -24,7 +24,7 @@ st.set_page_config(
     layout="wide"
 )
 
-if check_password:
+if check_password():
     # Initialize session state
     if 'search_complete' not in st.session_state:
         st.session_state.search_complete = False
