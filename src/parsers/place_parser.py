@@ -13,7 +13,7 @@ from tools.notion import Notion
 DEFAULT_FIELD_MASK = "places.id,places.displayName,places.googleMapsUri,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.rating,places.userRatingCount,places.reviewSummary,places.reviews"
 
 places_api_key = get_secret("GOOGLE_API_KEY")
-places_api_url = get_secret("GOOGLE_API_URL")
+places_api_url = "https://places.googleapis.com/v1/places:searchText"
 
 
 class PlaceParser:
