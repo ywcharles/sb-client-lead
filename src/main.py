@@ -40,9 +40,9 @@ sample_queries = [
         "market Bergen County NJ",
     ]
 
-p = PlaceParser()
-p.mass_search(["gift shop Bergen County NJ"])
-p.update_notion_with_places()
+# p = PlaceParser()
+# p.mass_search(["gift shop Bergen County NJ"])
+# p.update_notion_with_places()
 # places = list(p.places.values())
 
 # os.makedirs("./places", exist_ok=True)
@@ -57,8 +57,11 @@ p.update_notion_with_places()
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-# with open("./places/Love___Box.pkl", 'rb') as file:
-#     place = pickle.load(file)
+with open("./places/Love___Box.pkl", 'rb') as file:
+    place = pickle.load(file)
+
+sc = wp.take_screenshot(place.website_uri)
+print(sc)
 
 # notion = Notion()
 # ids = notion.fetch_all_place_ids()

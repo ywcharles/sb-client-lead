@@ -17,7 +17,7 @@ class Notion:
         }
 
     @staticmethod
-    def chunk_text(text, max_length=2000):
+    def chunk_text(text, max_length=1500):
         if not text:
             return ["No content available."]
         return [text[i:i + max_length - 1] for i in range(0, len(text), max_length - 1)]
