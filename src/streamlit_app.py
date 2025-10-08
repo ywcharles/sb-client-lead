@@ -30,63 +30,76 @@ if check_password():
         st.session_state.search_complete = False
     if 'places_found' not in st.session_state:
         st.session_state.places_found = 0
+    if 'searching' not in st.session_state:
+        st.session_state.searching = False
+    if 'parser' not in st.session_state:
+        st.session_state.parser = None
 
     # App header
     st.title("🔍 Lead Generation Tool")
 
-    # Main content area
-    st.header("Search Queries")
+    # Only show input and button if not currently searching
+    if not st.session_state.searching:
+        # Main content area
+        st.header("Search Queries")
 
-    input_method = st.radio(
-        "Choose input method:",
-        ["Bulk Input (Multiple Queries)", "Single Query"],
-        horizontal=True
-    )
-
-    if input_method == "Bulk Input (Multiple Queries)":
-        st.markdown("Enter one search query per line:")
-        queries_text = st.text_area(
-            "Search Queries",
-            height=200,
-            placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
-            label_visibility="collapsed"
-        )
-        
-        # Parse queries
-        queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
-        
-        if queries:
-            st.info(f"📋 {len(queries)} queries ready to search")
-            with st.expander("Preview queries"):
-                for i, q in enumerate(queries, 1):
-                    st.write(f"{i}. {q}")
-    else:
-        single_query = st.text_input(
-            "Search Query",
-            placeholder="e.g., restaurant in Philadelphia"
-        )
-        queries = [single_query] if single_query.strip() else []
-
-    # Search button
-    st.divider()
-    col1, col2, col3 = st.columns([1, 2, 1])
-
-    with col2:
-        search_button = st.button(
-            "🚀 Start Search & Export to Notion",
-            type="primary",
-            width='stretch',
-            disabled=len(queries) == 0
+        input_method = st.radio(
+            "Choose input method:",
+            ["Bulk Input (Multiple Queries)", "Single Query"],
+            horizontal=True
         )
 
-    # Search execution
-    if search_button and queries:
+        if input_method == "Bulk Input (Multiple Queries)":
+            st.markdown("Enter one search query per line:")
+            queries_text = st.text_area(
+                "Search Queries",
+                height=200,
+                placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
+                label_visibility="collapsed"
+            )
+            
+            # Parse queries
+            queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
+            
+            if queries:
+                st.info(f"📋 {len(queries)} queries ready to search")
+                with st.expander("Preview queries"):
+                    for i, q in enumerate(queries, 1):
+                        st.write(f"{i}. {q}")
+        else:
+            single_query = st.text_input(
+                "Search Query",
+                placeholder="e.g., restaurant in Philadelphia"
+            )
+            queries = [single_query] if single_query.strip() else []
+
+        # Search button
+        st.divider()
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col2:
+            search_button = st.button(
+                "🚀 Start Search & Export to Notion",
+                type="primary",
+                use_container_width=True,
+                disabled=len(queries) == 0
+            )
+
+        # Set searching state when button is clicked
+        if search_button and queries:
+            st.session_state.searching = True
+            st.session_state.queries = queries
+            st.rerun()
+
+    # Search execution (only visible when searching)
+    if st.session_state.searching:
+        queries = st.session_state.queries
         st.session_state.search_complete = False
         
         # Create parser instance
         parser = PlaceParser()
         
-       # Progress tracking
+        # Progress tracking
         progress_bar = st.progress(0)
         status_text = st.empty()
 
@@ -104,12 +117,14 @@ if check_password():
                 status_text.text(f"Searching query {idx + 1}/{total_queries}: {query}")
 
                 with st.expander(f"Query {idx + 1}: {query}", expanded=True):
-                    search_start = time.time()
+                    with st.spinner(f"🔄 Fetching places for: {query}..."):
+                        search_start = time.time()
 
-                    # Perform search
-                    parser.search(query)
+                        # Perform search
+                        parser.search(query)
 
-                    search_time = time.time() - search_start
+                        search_time = time.time() - search_start
+                    
                     new_places = len(parser.places) - total_leads_found
                     total_leads_found = len(parser.places)
 
@@ -121,14 +136,6 @@ if check_password():
             progress_bar.progress(1.0)
             status_text.success("✅ All queries completed!")
 
-        # Exporting to Notion (with a spinner)
-        with st.spinner("Exporting leads to Notion..."):
-            try:
-                parser.update_notion_with_places()
-                st.success(f"✅ {len(parser.places)} leads exported successfully!")
-            except Exception as e:
-                st.error(f"❌ Error exporting to Notion: {str(e)}")
-        
         # Summary
         st.divider()
         st.subheader("📊 Search Summary")
@@ -159,7 +166,7 @@ if check_password():
                     "Website": "✅" if place.website_uri else "❌"
                 })
             
-            st.dataframe(table_data, width="stretch")
+            st.dataframe(table_data, use_container_width=True)
             
             # Export section
             st.divider()
@@ -176,6 +183,15 @@ if check_password():
         
         st.session_state.search_complete = True
         st.session_state.places_found = len(parser.places)
+        st.session_state.searching = False
+        st.session_state.parser = parser
+        
+        # Add button to start new search
+        st.divider()
+        if st.button("🔄 Start New Search", type="primary"):
+            st.session_state.searching = False
+            st.session_state.search_complete = False
+            st.rerun()
 
     # Footer
     st.divider()
