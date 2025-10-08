@@ -1,15 +1,12 @@
-import os
 import requests
-from dotenv import load_dotenv
 from place import Place
-
-load_dotenv()
+from tools.keys import get_secret
 
 class Notion:
     def __init__(self, api_key=None, database_id=None, data_source_id=None):
-        self.api_key = api_key or os.getenv("NOTION_API_KEY")
-        self.database_id = database_id or os.getenv("NOTION_DATABASE_ID")
-        self.data_source_id = data_source_id or os.getenv("NOTION_DATA_SOURCE_ID")
+        self.api_key = api_key or get_secret("NOTION_API_KEY")
+        self.database_id = database_id or get_secret("NOTION_DATABASE_ID")
+        self.data_source_id = data_source_id or get_secret("NOTION_DATA_SOURCE_ID")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",

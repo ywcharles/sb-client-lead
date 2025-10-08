@@ -1,16 +1,11 @@
-from langchain_openai import ChatOpenAI
 from openai import OpenAI
-from dotenv import load_dotenv
 
 from parsers.website_parser import WebsiteParser as wp
 
-import os
 import base64
-from place import Place
+from tools.keys import get_secret
 
-load_dotenv()
-
-OPEN_AI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPEN_AI_API_KEY = get_secret("OPENAI_API_KEY")
 
 
 class LeadsAgent:
