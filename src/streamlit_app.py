@@ -61,7 +61,7 @@ with col2:
     search_button = st.button(
         "🚀 Start Search & Export to Notion",
         type="primary",
-        use_container_width=True,
+        width='stretch',
         disabled=len(queries) == 0
     )
 
@@ -135,7 +135,7 @@ if search_button and queries:
                 "Website": "✅" if place.website_uri else "❌"
             })
         
-        st.dataframe(table_data, use_container_width=True)
+        st.dataframe(table_data, width="stretch")
         
         # Export section
         st.divider()

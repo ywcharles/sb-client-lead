@@ -1,8 +1,11 @@
+import sys
 import requests
+import tempfile
 import os
 import re
 from collections import deque
 from urllib.parse import urljoin, urlparse
+import subprocess
 
 from bs4 import BeautifulSoup
 
@@ -31,7 +34,7 @@ def filter_emails(emails):
     output_emails = []
     for mail in emails:
         name = mail.split("@")[0]
-        if name not in ROLE_BASED_PREFIXES and mail != '':
+        if name not in ROLE_BASED_PREFIXES and mail != "":
             output_emails.append(mail)
 
     return output_emails
@@ -98,8 +101,10 @@ class WebsiteParser:
                     full_url = urljoin(curr_page_url, a_tag["href"])
                     same_domain = domain in urlparse(full_url).netloc
                     page_not_visited = full_url not in visited
-                    relevant_page = any(keyword in full_url.lower() for keyword in relevant_keywords)
-                    if same_domain and page_not_visited  and relevant_page:
+                    relevant_page = any(
+                        keyword in full_url.lower() for keyword in relevant_keywords
+                    )
+                    if same_domain and page_not_visited and relevant_page:
                         q.append(full_url)
 
                 html_contents.append(soup.text)
@@ -121,22 +126,30 @@ class WebsiteParser:
             return "Failed to extract HTML contents"
 
     @staticmethod
-    def take_screenshot(url, full_page=True): # TODO Delete screenshot once UI report is done
+    def take_screenshot(url, full_page=True):
         try:
-            # Make sure screenshot folder exists
             screenshot_dir = os.path.join(os.getcwd(), "screenshots")
             os.makedirs(screenshot_dir, exist_ok=True)
 
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
-                page.goto(url, timeout=15000)
+            output_file = os.path.join(screenshot_dir, "temp_screenshot.png")
 
-                output_file = os.path.join(screenshot_dir, f"temp_screenshot.png")
+            # Use forward slashes for Windows compatibility in subprocess string
+            safe_output_file = output_file.replace("\\", "/")
 
-                page.screenshot(path=output_file, full_page=full_page)
-                browser.close()
+            script = f"""
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
+    page.goto("{url}", timeout=15000)
+    page.screenshot(path=r"{safe_output_file}", full_page={full_page})
+    browser.close()
+    """
 
+            subprocess.run([sys.executable, "-c", script], check=True, capture_output=True)
             return output_file
+
+        except subprocess.CalledProcessError as e:
+            return f"Failed to take screenshot (subprocess error): {e.stderr.decode('utf-8', errors='ignore')}"
         except Exception as e:
             return f"Failed to take screenshot: {e}"
