@@ -52,6 +52,60 @@ class PlaceParser:
         else:
             print("Error:", response.status_code, response.text)
 
+    def search_and_export(self, search_query: str, status_placeholder=None, table_placeholder=None):
+        """
+        Sends request to maps api and exports each place to Notion immediately.
+        Provides real-time progress updates to Streamlit UI.
+        """
+        headers = {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": places_api_key,
+            "X-Goog-fieldMask": self.field_mask,
+        }
+
+        body = {"textQuery": search_query}
+
+        response = requests.post(places_api_url, headers=headers, json=body)
+
+        if response.status_code == 200:
+            data = response.json()
+            results = data.get("places", [])
+            total_results = len(results)
+            
+            for idx, place in enumerate(results):
+                if place["id"] not in self.places and place["id"] not in self.visited:
+                    print(f'    FOUND: {place["id"]}')
+                    p = Place(place=place, leads_agent=self.agent)
+                    
+                    if len(p.emails) > 0:  # eliminate places with no emails
+                        self.places[place["id"]] = p
+                        
+                        # Export to Notion immediately
+                        try:
+                            self.notion.export_place(place=p)
+                            
+                            # Update table with live results
+                            if table_placeholder:
+                                table_data = []
+                                for stored_place in self.places.values():
+                                    table_data.append({
+                                        "Business": stored_place.display_name,
+                                        "Lead Score": f"{stored_place.lead_score}/5.00",
+                                        "Rating": f"{stored_place.rating} ⭐" if stored_place.rating else "N/A",
+                                        "Phone": stored_place.national_phone_number or "N/A",
+                                        "Emails": ", ".join(stored_place.emails[:2]) if stored_place.emails else "N/A",
+                                        "Website": "✅" if stored_place.website_uri else "❌",
+                                        "Status": "✅ Exported"
+                                    })
+                                table_placeholder.dataframe(table_data, use_container_width=True)
+                            
+                            # Add random delay to avoid rate limiting
+                            time.sleep(random.uniform(0.4, 0.6))
+                        except Exception as e:
+                            print(f"❌ Error exporting {p.display_name}: {e}")
+        else:
+            print("Error:", response.status_code, response.text)
+
     def mass_search(self, queries: List[str]):
         for q in queries:
             print(f'__Searching for {q}__')
@@ -86,7 +140,6 @@ class PlaceParser:
         ws.append(headers)
 
         # Write data rows
-       # Write data rows
         for place in self.places.values():
             # Extract review texts only (limit to 3 to avoid Excel bloat)
             review_texts = [r.get("text", {}).get("text", "") for r in place.reviews[:3]]
@@ -116,9 +169,10 @@ class PlaceParser:
         wb.save(filename)
 
     def update_notion_with_places(self):
+        """Legacy batch export method - kept for backward compatibility"""
         for place in self.places.values():
-            self.notion.export_place(place = place)
-            time.sleep(random.uniform(0.4, 0.6)) 
+            self.notion.export_place(place=place)
+            time.sleep(random.uniform(0.4, 0.6))
 
 
 if __name__ == "__main__":
