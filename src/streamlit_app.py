@@ -1,9 +1,18 @@
 import streamlit as st
+
+import subprocess
 import time
+
 from parsers.place_parser import PlaceParser
 from tools.keys import get_secret
 
 APP_PASSWORD = get_secret("APP_PASSWORD")
+
+# Install Playwright browsers (only first startup)
+try:
+    subprocess.run(["playwright", "install", "--with-deps", "chromium"], check=True)
+except Exception as e:
+    print("Playwright setup skipped:", e)
 
 def check_password():
     """Return True if the user entered the correct password."""
@@ -35,43 +44,27 @@ if check_password():
     if 'parser' not in st.session_state:
         st.session_state.parser = None
 
-    # App header
-    st.title("🔍 Lead Generation Tool")
-
     # Only show input and button if not currently searching
     if not st.session_state.searching:
         # Main content area
-        st.header("Search Queries")
+        st.header("Search Leads")
 
-        input_method = st.radio(
-            "Choose input method:",
-            ["Bulk Input (Multiple Queries)", "Single Query"],
-            horizontal=True
+        st.markdown("Enter one search query per line:")
+        queries_text = st.text_area(
+            "Search Queries",
+            height=200,
+            placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
+            label_visibility="collapsed"
         )
-
-        if input_method == "Bulk Input (Multiple Queries)":
-            st.markdown("Enter one search query per line:")
-            queries_text = st.text_area(
-                "Search Queries",
-                height=200,
-                placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
-                label_visibility="collapsed"
-            )
-            
-            # Parse queries
-            queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
-            
-            if queries:
-                st.info(f"📋 {len(queries)} queries ready to search")
-                with st.expander("Preview queries"):
-                    for i, q in enumerate(queries, 1):
-                        st.write(f"{i}. {q}")
-        else:
-            single_query = st.text_input(
-                "Search Query",
-                placeholder="e.g., restaurant in Philadelphia"
-            )
-            queries = [single_query] if single_query.strip() else []
+        
+        # Parse queries
+        queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
+        
+        if queries:
+            st.info(f"📋 {len(queries)} queries ready to search")
+            with st.expander("Preview queries"):
+                for i, q in enumerate(queries, 1):
+                    st.write(f"{i}. {q}")
 
         # Search button
         st.divider()
@@ -81,7 +74,7 @@ if check_password():
             search_button = st.button(
                 "🚀 Start Search & Export to Notion",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
                 disabled=len(queries) == 0
             )
 
@@ -111,30 +104,42 @@ if check_password():
 
             total_queries = len(queries)
             total_leads_found = 0
+            total_exported = 0
+
+            # Create placeholders for live updates
+            export_status = st.empty()
+            leads_table = st.empty()
 
             for idx, query in enumerate(queries):
-                progress_bar.progress(idx / total_queries)
+                progress_bar.progress((idx / total_queries) * 0.5)  # First half for searching
                 status_text.text(f"Searching query {idx + 1}/{total_queries}: {query}")
 
                 with st.expander(f"Query {idx + 1}: {query}", expanded=True):
+                    query_results_placeholder = st.empty()
+                    
                     with st.spinner(f"🔄 Fetching places for: {query}..."):
                         search_start = time.time()
 
-                        # Perform search
-                        parser.search(query)
-
+                        # Perform search and export places as they're found
+                        initial_count = len(parser.places)
+                        parser.search_and_export(query, export_status, leads_table)
+                        
                         search_time = time.time() - search_start
                     
                     new_places = len(parser.places) - total_leads_found
                     total_leads_found = len(parser.places)
+                    total_exported = total_leads_found  # All found places are exported immediately
 
-                    st.success(f"✅ Query completed in {search_time:.2f}s")
-                    st.metric("Leads Found This Query", new_places)
-                    st.metric("Total Leads Found", total_leads_found)
+                    query_results_placeholder.success(f"✅ Query completed in {search_time:.2f}s")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Leads Found This Query", new_places)
+                    with col2:
+                        st.metric("Exported This Query", new_places)
 
             # Final updates after all queries
             progress_bar.progress(1.0)
-            status_text.success("✅ All queries completed!")
+            status_text.success("✅ All queries completed and exported!")
 
         # Summary
         st.divider()
@@ -145,7 +150,7 @@ if check_password():
         with col1:
             st.metric("Queries Processed", len(queries))
         with col2:
-            st.metric("Places Found", len(parser.places))
+            st.metric("Places Found & Exported", len(parser.places))
         with col3:
             avg_score = sum(p.lead_score for p in parser.places.values()) / len(parser.places) if parser.places else 0
             st.metric("Avg Lead Score", f"{avg_score:.2f}")
@@ -163,21 +168,11 @@ if check_password():
                     "Rating": f"{place.rating} ⭐" if place.rating else "N/A",
                     "Phone": place.national_phone_number or "N/A",
                     "Emails": ", ".join(place.emails[:2]) if place.emails else "N/A",
-                    "Website": "✅" if place.website_uri else "❌"
+                    "Website": "✅" if place.website_uri else "❌",
+                    "Status": "✅ Exported"
                 })
             
-            st.dataframe(table_data, use_container_width=True)
-            
-            # Export section
-            st.divider()
-            st.subheader("💾 Exporting to Notion")
-            
-            with st.spinner("Exporting leads to Notion..."):
-                try:
-                    parser.update_notion_with_places()
-                    st.success(f"✅ {len(parser.places)} leads exported to Notion successfully!")
-                except Exception as e:
-                    st.error(f"❌ Error exporting to Notion: {str(e)}")
+            st.dataframe(table_data, width="stretch")
         else:
             st.warning("⚠️ No places found with email addresses.")
         
