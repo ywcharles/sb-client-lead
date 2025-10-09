@@ -30,6 +30,8 @@ class LeadsAgent:
     Focus only on **UI improvements** (design, layout, accessibility, usability).
     If there are no UI improvements, simply output "NO IMPROVEMENTS".
     Consider if the UI is oudated with the newest UI trends, as well if the branding is cohesive
+
+    Keep response concise (max 200 words). Be specific and actionable.
     """
 
             resp = self.base_model.responses.create(
@@ -76,6 +78,7 @@ Your task:
 Here is the content:
 {page_contents}
 
+Keep response concise (max 200 words) but still be specific.
     """
 
             resp = self.base_model.responses.create(
@@ -139,6 +142,8 @@ Website UI Report:
 
 Google Maps Reviews:  
 {google_map_reviews}  
+
+Keep response concise (max 150 words). Be specific and actionable.
 """
 
             resp = self.base_model.responses.create(

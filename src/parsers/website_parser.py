@@ -68,7 +68,7 @@ class WebsiteParser:
         except Exception:
             return []
 
-    def crawl_website(url: str, max_pages=5):
+    def crawl_website(url: str, max_pages=5, max_char_per_page = 2000):
         relevant_keywords = [
             "about",
             "who-we-are",
@@ -107,7 +107,7 @@ class WebsiteParser:
                     if same_domain and page_not_visited and relevant_page:
                         q.append(full_url)
 
-                html_contents.append(soup.text)
+                html_contents.append(soup.text[:max_char_per_page])
 
             except Exception:
                 return "Failed to extract HTML contents"
