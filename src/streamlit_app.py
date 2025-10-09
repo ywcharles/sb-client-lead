@@ -10,7 +10,7 @@ APP_PASSWORD = get_secret("APP_PASSWORD")
 
 # Install Playwright browsers (only first startup)
 try:
-    subprocess.run(["playwright", "install", "--with-deps", "chromium"], check=True)
+    subprocess.run(["playwright", "install", "chromium"], check=True)
 except Exception as e:
     print("Playwright setup skipped:", e)
 
