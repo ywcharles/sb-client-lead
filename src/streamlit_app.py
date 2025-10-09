@@ -1,9 +1,18 @@
 import streamlit as st
+
+import subprocess
 import time
+
 from parsers.place_parser import PlaceParser
 from tools.keys import get_secret
 
 APP_PASSWORD = get_secret("APP_PASSWORD")
+
+# Install Playwright browsers (only first startup)
+try:
+    subprocess.run(["playwright", "install", "--with-deps", "chromium"], check=True)
+except Exception as e:
+    print("Playwright setup skipped:", e)
 
 def check_password():
     """Return True if the user entered the correct password."""
@@ -35,43 +44,27 @@ if check_password():
     if 'parser' not in st.session_state:
         st.session_state.parser = None
 
-    # App header
-    st.title("🔍 Lead Generation Tool")
-
     # Only show input and button if not currently searching
     if not st.session_state.searching:
         # Main content area
-        st.header("Search Queries")
+        st.header("Search Leads")
 
-        input_method = st.radio(
-            "Choose input method:",
-            ["Bulk Input (Multiple Queries)", "Single Query"],
-            horizontal=True
+        st.markdown("Enter one search query per line:")
+        queries_text = st.text_area(
+            "Search Queries",
+            height=200,
+            placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
+            label_visibility="collapsed"
         )
-
-        if input_method == "Bulk Input (Multiple Queries)":
-            st.markdown("Enter one search query per line:")
-            queries_text = st.text_area(
-                "Search Queries",
-                height=200,
-                placeholder="restaurant in Philadelphia\ncoffee shop in New York\nbar in Boston\nrestaurant in Miami",
-                label_visibility="collapsed"
-            )
-            
-            # Parse queries
-            queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
-            
-            if queries:
-                st.info(f"📋 {len(queries)} queries ready to search")
-                with st.expander("Preview queries"):
-                    for i, q in enumerate(queries, 1):
-                        st.write(f"{i}. {q}")
-        else:
-            single_query = st.text_input(
-                "Search Query",
-                placeholder="e.g., restaurant in Philadelphia"
-            )
-            queries = [single_query] if single_query.strip() else []
+        
+        # Parse queries
+        queries = [q.strip() for q in queries_text.split('\n') if q.strip()]
+        
+        if queries:
+            st.info(f"📋 {len(queries)} queries ready to search")
+            with st.expander("Preview queries"):
+                for i, q in enumerate(queries, 1):
+                    st.write(f"{i}. {q}")
 
         # Search button
         st.divider()
