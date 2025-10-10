@@ -170,7 +170,16 @@ Keep response concise (max 150 words). Be specific and actionable.
         """
         try:
             prompt = f"""
-You are a professional B2B sales copywriter.
+You are a professional B2B sales copywriter. Your name is Nico Constantin and you are the director of operations at Student Brains Consulting.
+
+Description about Student Brains Consulting:
+Student Brains Consulting helps startups and small to medium-sized businesses streamline operations and accelerate growth through short, high-impact consulting sprints. We combine strategy and hands-on execution, delivering tangible business results across four key areas:
+- **Automation:** Improve operational, sales, and support workflows through process mapping, AI tools, and no-code automations.
+- **Website Redesign:** Enhance user experience and conversion through modern, optimized site designs.
+- **Consulting:** Provide organizational and process consulting to identify inefficiencies and implement scalable systems.
+- **Bookkeeping & Accounting:** Simplify financial tracking and reporting with accurate, systemized bookkeeping solutions.
+
+Unlike traditional consulting firms, Student Brains pairs experienced consultants with trained university talent to deliver measurable outcomes quickly and affordably. Our focus is practical execution—not just strategy decks.
 
 Write a short, concrete cold outreach email for {business_name}.
 Use the following information:
@@ -186,8 +195,9 @@ Format:
 - 2–3 tailored benefits based on their pain points (from our services: automation, redesign, consulting, bookkeeping).
 - 1 simple CTA to continue the conversation (like scheduling a quick call).
 
-Tone: professional but approachable. No fluff, no jargon. Keep it under 120 words.
+Tone: professional but approachable. No fluff, no jargon. Keep it under 150 words. Do not return markdown formatted text.
 """
+
 
             resp = self.base_model.responses.create(
                 model="gpt-4.1",

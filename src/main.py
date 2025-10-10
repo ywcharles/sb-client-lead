@@ -66,4 +66,5 @@ sample_queries = [
 notion = Notion()
 reviewed = notion.fetch_reviewed_leads()
 for r in reviewed:
-    print(r["email_sample"])
+    print(r["email_sample"]["email_subject"])
+    print(r["email_sample"]["email_body"])
