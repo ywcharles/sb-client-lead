@@ -57,13 +57,13 @@ sample_queries = [
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-with open("./places/Love___Box.pkl", 'rb') as file:
-    place = pickle.load(file)
+# with open("./places/Love___Box.pkl", 'rb') as file:
+#     place = pickle.load(file)
 
-sc = wp.take_screenshot(place.website_uri)
-print(sc)
+# sc = wp.take_screenshot(place.website_uri)
+# print(sc)
 
-# notion = Notion()
-# ids = notion.fetch_all_place_ids()
-# print(ids)
-# notion.export_place(place)
+notion = Notion()
+reviewed = notion.fetch_reviewed_leads()
+for r in reviewed:
+    print(r["email_sample"])
