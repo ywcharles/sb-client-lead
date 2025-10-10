@@ -68,3 +68,5 @@ reviewed = notion.fetch_reviewed_leads()
 for r in reviewed:
     print(r["email_sample"]["email_subject"])
     print(r["email_sample"]["email_body"])
+
+    notion.update_lead_status_to_sent(page_id=r["id"])

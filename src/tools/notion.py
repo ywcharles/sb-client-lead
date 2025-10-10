@@ -244,3 +244,23 @@ class Notion:
             "email_subject": subject,
             "email_body": body
         }
+    
+    def update_lead_status_to_sent(self, page_id: str):
+        """Update the Lead Status of a given page to 'Sent'."""
+        url = f"https://api.notion.com/v1/pages/{page_id}"
+        payload = {
+            "properties": {
+                "Lead Status": {
+                    "status": {"name": "Sent"}
+                }
+            }
+        }
+
+        res = requests.patch(url, headers=self.headers, json=payload)
+
+        if res.status_code == 200:
+            print(f"✅ Successfully updated Lead Status to 'Sent' for page {page_id}")
+            return True
+        else:
+            print(f"❌ Failed to update Lead Status for {page_id}: {res.status_code} - {res.text}")
+            return False
