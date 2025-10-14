@@ -74,12 +74,6 @@ with open("./places/Love___Box.pkl", 'rb') as file:
 #     notion.update_lead_status_to_sent(page_id=r["id"])
 
 
-reviews = place.reviews
-
-for rev in reviews[:1]:
-    print(rev)
-
-avg, scores = score_reviews_list(reviews)
-print(avg)
-for rev , score in scores.items():
-    print(score, rev)
+print(place.lead_score)
+place.update_score_with_email_and_reviews()
+print(place.lead_score)

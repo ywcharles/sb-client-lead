@@ -1,6 +1,8 @@
 import math
 
 from parsers.website_parser import WebsiteParser as wp
+from tools.email import score_email
+from tools.reviews import score_review_text, score_reviews_list
 
 class Place:
     def __init__(self, place, leads_agent=None):
@@ -137,3 +139,32 @@ class Place:
         max_score = 20  # adjust if weights increase
         normalized = min(5, (raw_score / max_score) * 5)
         return round(normalized, 2)
+
+    def update_score_with_email_and_reviews(self, email_weight=0.3, review_weight=0.1, original_score_weight=0.6):
+        # Original raw score
+        original_score = self.lead_score or self.score_place()
+
+        # Score emails
+        if self.emails:
+            email_scores = [score_email(e) for e in self.emails]
+            best_email_score = max(email_scores)
+        else:
+            best_email_score = 1  # minimal if no email
+
+        # Score reviews (first 5)
+        if self.reviews:
+            avg_review_score, review_scores = score_reviews_list(self.reviews)
+            avg_review_score = 6 - avg_review_score # invert so more bad reviews better the lead
+        else:
+            avg_review_score = 3  # neutral if no reviews
+
+        # Combine all scores
+        combined_score = (
+            original_score * original_score_weight + 
+            best_email_score * email_weight +
+            avg_review_score * review_weight
+        )
+
+        # Normalize to 1-5
+        self.lead_score = round(min(max(combined_score, 1), 5), 2)
+        return self.lead_score
