@@ -6,6 +6,7 @@ import os
 import re
 import pickle
 
+from tools.email import score_email
 from tools.notion import Notion
 
 def sanitize_filename(name: str) -> str:
@@ -63,10 +64,15 @@ sample_queries = [
 # sc = wp.take_screenshot(place.website_uri)
 # print(sc)
 
-notion = Notion()
-reviewed = notion.fetch_reviewed_leads()
-for r in reviewed:
-    print(r["email_sample"]["email_subject"])
-    print(r["email_sample"]["email_body"])
+# notion = Notion()
+# reviewed = notion.fetch_reviewed_leads()
+# for r in reviewed:
+#     print(r["email_sample"]["email_subject"])
+#     print(r["email_sample"]["email_body"])
 
-    notion.update_lead_status_to_sent(page_id=r["id"])
+#     notion.update_lead_status_to_sent(page_id=r["id"])
+
+emails = ["john.doe@company.com","info@company.com", "jane@outlook.com", "support@gmail.com", "random@tempmail.com"]
+
+for e in emails:
+    print(e, score_email(e))
