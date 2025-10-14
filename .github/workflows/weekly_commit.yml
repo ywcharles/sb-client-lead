@@ -1,24 +1,15 @@
-name: Keep Streamlit App Awake
+name: Weekly Keep-Alive Commit
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
-    - cron: "0 12 * * 1"
+    - cron: "0 12 * * 1" # every Monday at 12:00 UTC
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  keep_awake:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ping Streamlit app
-        run: |
-          curl -s -o /dev/null -w "%{http_code}" https://your-streamlit-app-url.streamlit.app
-
   weekly_commit:
-    if: github.event.schedule == '0 12 * * 1'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -26,6 +17,7 @@ jobs:
 
       - name: Create empty commit
         run: |
+          echo "🫀 Creating weekly keep-alive commit..."
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit --allow-empty -m "🫀 keep-alive: weekly heartbeat"
