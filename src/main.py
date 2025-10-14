@@ -8,6 +8,7 @@ import pickle
 
 from tools.email import score_email
 from tools.notion import Notion
+from tools.reviews import score_reviews_list
 
 def sanitize_filename(name: str) -> str:
     """Replace illegal filename chars with underscores"""
@@ -58,8 +59,8 @@ sample_queries = [
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-# with open("./places/Love___Box.pkl", 'rb') as file:
-#     place = pickle.load(file)
+with open("./places/Love___Box.pkl", 'rb') as file:
+    place = pickle.load(file)
 
 # sc = wp.take_screenshot(place.website_uri)
 # print(sc)
@@ -72,7 +73,13 @@ sample_queries = [
 
 #     notion.update_lead_status_to_sent(page_id=r["id"])
 
-emails = ["john.doe@company.com","info@company.com", "jane@outlook.com", "support@gmail.com", "random@tempmail.com"]
 
-for e in emails:
-    print(e, score_email(e))
+reviews = place.reviews
+
+for rev in reviews[:1]:
+    print(rev)
+
+avg, scores = score_reviews_list(reviews)
+print(avg)
+for rev , score in scores.items():
+    print(score, rev)

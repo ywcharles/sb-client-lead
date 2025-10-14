@@ -7,3 +7,4 @@ langchain-openai
 langchain
 playwright
 streamlit
+textblob
