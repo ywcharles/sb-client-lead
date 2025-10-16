@@ -131,12 +131,8 @@ class Place:
         if self.website_uri:
             raw_score += 2
 
-        # Emails
-        if self.emails:
-            raw_score += 2
-
         # Normalize to 5
-        max_score = 20  # adjust if weights increase
+        max_score = 18 # adjust if weights increase
         normalized = min(5, (raw_score / max_score) * 5)
         return round(normalized, 2)
 
