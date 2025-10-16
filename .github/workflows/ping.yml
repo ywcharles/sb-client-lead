@@ -1,3 +1,5 @@
+name: Ping Streamlit App
+
 on:
   schedule:
     - cron: "*/30 * * * *" # every 30 minutes
@@ -10,4 +12,4 @@ jobs:
       - name: Ping Streamlit app
         run: |
           echo "🌐 Pinging Streamlit app..."
-          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -L https://your-streamlit-app-url.streamlit.app  
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -L https://your-streamlit-app-url.streamlit.app
