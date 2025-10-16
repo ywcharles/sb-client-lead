@@ -1,8 +1,6 @@
-name: Ping Streamlit App
-
 on:
   schedule:
-    - cron: "*/15 * * * *" # every 15 minutes (safer than 30m)
+    - cron: "*/30 * * * *" # every 30 minutes
   workflow_dispatch:
 
 jobs:
@@ -11,5 +9,5 @@ jobs:
     steps:
       - name: Ping Streamlit app
         run: |
-          echo "🌐 Sending keep-alive ping to Streamlit app..."
-          curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -s -o /dev/null -w "%{http_code}\n" https://your-streamlit-app-url.streamlit.app
+          echo "🌐 Pinging Streamlit app..."
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -L https://your-streamlit-app-url.streamlit.app  
