@@ -59,7 +59,7 @@ sample_queries = [
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-with open("./places/Love___Box.pkl", 'rb') as file:
+with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
     place = pickle.load(file)
 
 # sc = wp.take_screenshot(place.website_uri)
@@ -76,4 +76,6 @@ with open("./places/Love___Box.pkl", 'rb') as file:
 
 print(place.lead_score)
 place.update_score_with_email_and_reviews()
+print(place.lead_score)
+place.update_score_with_llm_rating()
 print(place.lead_score)

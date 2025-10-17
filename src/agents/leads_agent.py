@@ -3,6 +3,8 @@ from openai import OpenAI
 from parsers.website_parser import WebsiteParser as wp
 
 import base64
+import re
+
 from tools.keys import get_secret
 
 OPEN_AI_API_KEY = get_secret("OPENAI_API_KEY")
@@ -213,3 +215,74 @@ Tone: professional but approachable. No fluff, no jargon. Keep it under 150 word
 
         except Exception as e:
             print(e)
+
+
+    def generate_lead_score(self, place) -> float:
+        """
+        Generate a numeric lead score (1.0–5.0) for a business based on its Place data.
+        Uses structured business information such as name, status, rating, website, and reviews.
+        Returns -1.0 if parsing fails or LLM output is invalid.
+        """
+        try:
+            # Build structured business info text
+            google_map_reviews = ""
+            if place.reviews:
+                google_map_reviews = "\n".join(
+                    [f"Review {idx + 1}: {review.get('text', {}).get('text', '')}" for idx, review in enumerate(place.reviews[:5])]
+                )
+
+            info = f"""
+    Business Name: {place.display_name}
+    Status: {place.business_status}
+    Rating: {place.rating}
+    Review Count: {place.user_rating_count}
+    Review Summary: {place.review_summary or "N/A"}
+    Has Website: {"Yes" if place.website_uri else "No"}
+    Has Email: {"Yes" if place.emails else "No"}
+    Types: {", ".join(place.types)}
+    Google Reviews:
+    {google_map_reviews}
+    """
+
+            # Prompt focused on lead potential from basic data
+            prompt = f"""
+    You are an experienced business consultant evaluating how strong a potential lead is for Student Brains Consulting.
+
+    You will receive structured information about a business, including its online presence and customer feedback.
+
+    Your task:
+    - Evaluate how much **potential value** this business could get from consulting and automation services.
+    - Consider: their business status, online presence (website/email), reviews, and customer sentiment.
+    - Output **only one float number between 1.0 and 5.0**, where:
+    - 1.0 = Very low potential (closed, poor reputation, no contact info)
+    - 3.0 = Moderate potential (some weaknesses, but reachable)
+    - 5.0 = High potential (operational, reachable, strong reputation)
+
+    Respond with just the number. No explanation.
+
+    Business Info:
+    {info}
+    """
+
+            # Deterministic API call
+            response = self.base_model.responses.create(
+                model="gpt-4.1-mini",
+                input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
+                temperature=0,
+            )
+
+            raw_output = response.output_text.strip()
+
+            # Extract first float or int
+            match = re.search(r"\d+(\.\d+)?", raw_output)
+            if match:
+                score = float(match.group())
+                score = max(1.0, min(score, 5.0))
+                return round(score, 1)
+            else:
+                print(f"⚠️ Could not parse numeric score from model output: {raw_output}")
+                return -1.0
+
+        except Exception as e:
+            print(f"Error generating lead score: {e}")
+            return -1.0
