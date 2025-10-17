@@ -2,7 +2,7 @@ name: Ping Streamlit App
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # every 30 minutes
+    - cron: "*/10 * * * *" # every 30 minutes
   workflow_dispatch:
 
 jobs:
@@ -12,4 +12,4 @@ jobs:
       - name: Ping Streamlit app
         run: |
           echo "🌐 Pinging Streamlit app..."
-          curl -I https://sb-client-lead.streamlit.app/
+          curl -s -o /dev/null -w "%{http_code}\n" https://sb-client-lead.streamlit.app/
