@@ -6,7 +6,13 @@ from tools.email import score_email
 from tools.reviews import score_review_text, score_reviews_list
 
 class Place:
-    def __init__(self, place, leads_agent=None):
+    # Configurable thresholds
+    MIN_SCORE_FOR_AI_REPORTS = 2.5  # Only generate AI reports if final score >= 2.5
+    MIN_RATING_FOR_REPORTS = 3.5    # Skip if rating is too high (less pain points)
+    MAX_RATING_FOR_REPORTS = 4.3    # Skip if rating is excellent (harder to pitch)
+    MIN_REVIEW_COUNT = 5            # Need enough reviews to identify patterns
+    
+    def __init__(self, place, leads_agent=None, enable_thresholds=True):
         self.id = place.get("id")
         self.types = place.get("types", [])
         self.national_phone_number = place.get("nationalPhoneNumber")
@@ -26,21 +32,54 @@ class Place:
                  .get("text")
         )
         
+        # Step 1: Find emails first
         self.emails = self.find_email()
-        self.lead_score = self.score_place()
         
-        # Generate AI reports if leads_agent is provided
+        # Step 2: Calculate base score
+        self.lead_score = self.score_place()
+        print(f'        📊 Base score: {self.lead_score}/5.00')
+        
+        # Step 3: Update score with email and review quality
+        if self.emails:
+            self.update_score_with_email_and_reviews()
+            print(f'        📊 Updated score: {self.lead_score}/5.00')
+        
+        # Initialize AI report fields
         self.ui_report = None
         self.brief = None
         self.pain_point_report = None
         self.email_sample = None
+        self.skip_reason = None
         
+        # Step 4: Generate AI reports based on FINAL score and thresholds
         if leads_agent and self.website_uri and self.emails:
-            self.generate_reports(leads_agent)
+            if enable_thresholds:
+                if self._should_generate_reports():
+                    self.generate_reports(leads_agent)
+                else:
+                    print(f'        ⏭️  Skipping AI reports for {self.display_name}: {self.skip_reason}')
+            else:
+                # Always generate if thresholds disabled
+                self.generate_reports(leads_agent)
+
+    def _should_generate_reports(self) -> bool:
+        """
+        Determine if this lead qualifies for expensive AI report generation.
+        Returns True if reports should be generated, False otherwise.
+        Sets self.skip_reason for logging.
+        
+        NOTE: This uses the UPDATED lead_score (after email/review scoring)
+        """
+        # Final lead score threshold (after email/review updates)
+        if self.lead_score < self.MIN_SCORE_FOR_AI_REPORTS:
+            self.skip_reason = f"Low lead score ({self.lead_score} < {self.MIN_SCORE_FOR_AI_REPORTS})"
+            return False
+
+        return True
 
     def generate_reports(self, leads_agent):
         """Generate all AI-powered reports for this place"""
-        print(f'        Generating reports for {self.display_name}...')
+        print(f'        🤖 Generating reports for {self.display_name}...')
         
         try:
             # Generate UI report
@@ -67,9 +106,9 @@ class Place:
                 self.pain_point_report
             )
             
-            print(f'        Reports generated successfully')
+            print(f'        ✅ Reports generated successfully')
         except Exception as e:
-            print(f'        Error generating reports: {e}')
+            print(f'        ❌ Error generating reports: {e}')
 
     def __str__(self):
         base_info = (
@@ -95,17 +134,19 @@ class Place:
             base_info += f"\n  Pain Point Report Generated: Yes"
         if self.email_sample:
             base_info += f"\n  Email Sample Generated: Yes"
+        if self.skip_reason:
+            base_info += f"\n  AI Reports Skipped: {self.skip_reason}"
             
         return base_info
     
     def find_email(self):
-        print(f'        Looking for {self.display_name} email')
+        print(f'        🔍 Looking for {self.display_name} email')
         emails = wp.extract_emails(self.website_uri) if self.website_uri else [] 
         
         if emails:
-            print(f'        Email found: {emails}')
+            print(f'        ✉️  Email found: {emails}')
         else:
-            print(f'        No email found')
+            print(f'        ❌ No email found')
         return emails
     
     def score_place(self):
@@ -138,6 +179,10 @@ class Place:
         return round(normalized, 2)
 
     def update_score_with_email_and_reviews(self, email_weight=0.3, review_weight=0.1, original_score_weight=0.6):
+        """
+        Updates the lead score by incorporating email quality and review sentiment.
+        This is now called automatically during __init__ before threshold checks.
+        """
         # Original raw score
         original_score = self.lead_score or self.score_place()
 
@@ -165,5 +210,3 @@ class Place:
         # Normalize to 1-5
         self.lead_score = round(min(max(combined_score, 1), 5), 2)
         return self.lead_score
-    
-    
