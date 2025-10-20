@@ -167,32 +167,3 @@ class Place:
         return self.lead_score
     
     
-    def update_score_with_llm_rating(self, weight: float = 0.1):
-        """
-        Update the lead score by blending the heuristic score with the LLM-generated score.
-        If the LLM score is invalid (-1), the original score is kept.
-        """
-        leads_agent = LeadsAgent()
-        try:
-            # Compute LLM score using the new Place-based scoring
-            llm_score = leads_agent.generate_lead_score(self)
-
-            original_score = self.lead_score or self.score_place()
-
-            # Fallback if LLM score failed
-            if llm_score == -1:
-                print(f"⚠️ LLM score invalid for {self.display_name}. Keeping original score ({original_score}).")
-                return original_score
-
-            # Weighted blend between heuristic and LLM scores
-            updated_score = (original_score * (1 - weight)) + (llm_score * weight)
-
-            # Clamp between 1–5
-            self.lead_score = round(min(max(updated_score, 1.0), 5.0), 2)
-
-            print(f"✅ Updated LLM score: {self.lead_score} | Reason: Combined {original_score} and {llm_score}")
-            return self.lead_score
-
-        except Exception as e:
-            print(f"❌ Error updating score with LLM for {self.display_name}: {e}")
-            return self.lead_score or self.score_place()
