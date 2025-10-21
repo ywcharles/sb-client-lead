@@ -6,7 +6,9 @@ import os
 import re
 import pickle
 
+from tools.email import score_email
 from tools.notion import Notion
+from tools.reviews import score_reviews_list
 
 def sanitize_filename(name: str) -> str:
     """Replace illegal filename chars with underscores"""
@@ -41,7 +43,7 @@ sample_queries = [
     ]
 
 # p = PlaceParser()
-# p.mass_search(["gift shop Bergen County NJ"])
+# p.mass_search(["cafe Bergen County NJ"])
 # p.update_notion_with_places()
 # places = list(p.places.values())
 
@@ -57,16 +59,23 @@ sample_queries = [
 # with open("./places/The_Gift_Shoppe_at_Curbside_Confections.pkl", 'rb') as file:
 #     place = pickle.load(file)
 
-# with open("./places/Love___Box.pkl", 'rb') as file:
-#     place = pickle.load(file)
+with open("./places/Blue_Ridge_Cafe.pkl", 'rb') as file:
+    place = pickle.load(file)
 
 # sc = wp.take_screenshot(place.website_uri)
 # print(sc)
 
-notion = Notion()
-reviewed = notion.fetch_reviewed_leads()
-for r in reviewed:
-    print(r["email_sample"]["email_subject"])
-    print(r["email_sample"]["email_body"])
+# notion = Notion()
+# reviewed = notion.fetch_reviewed_leads()
+# for r in reviewed:
+#     print(r["email_sample"]["email_subject"])
+#     print(r["email_sample"]["email_body"])
 
-    notion.update_lead_status_to_sent(page_id=r["id"])
+#     notion.update_lead_status_to_sent(page_id=r["id"])
+
+
+print(place.lead_score)
+place.update_score_with_email_and_reviews()
+print(place.lead_score)
+place.update_score_with_llm_rating()
+print(place.lead_score)
