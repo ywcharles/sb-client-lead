@@ -71,17 +71,17 @@ I will give you raw text content scraped from a potential client’s website.
 
 Your task:
 1. Ignore irrelevant text like navigation menus, cookie notices, or repeated boilerplate.  
-2. Identify what the business does, their industry, and their positioning from the text.  
+2. Identify what the business does, their industry, their positioning, and any details about how they operate (i.e., their business workflow — key steps, services, or customer journey).  
 3. Write a concise, personalized brief (1 short paragraph) that:  
-   - Provides context about the client’s business.  
+   - Provides context about the client’s business and workflow.  
    - Suggests quick wins or opportunities for automation, website improvements, or consulting.  
-   - Highlights anything notable or relevant based on their website.  
+   - Highlights anything notable or relevant based on their website or operations.  
 
 Here is the content:
 {page_contents}
 
-Keep response concise (max 200 words) but still be specific.
-    """
+Keep the response concise (max 200 words) but specific and insightful.
+"""
 
             resp = self.base_model.responses.create(
                 model="gpt-4.1",
@@ -163,7 +163,7 @@ Keep response concise (max 150 words). Be specific and actionable.
         except Exception as e:
             print(e)
 
-    def generate_personalized_email(self, business_name: str, brief: str, pain_point_report: str):
+    def generate_personalized_email(self, email:str, business_name: str, brief: str, pain_point_report: str):
         """
         Generate a short personalized cold email:
         - 1 personalization-driven opening line
@@ -186,6 +186,9 @@ Unlike traditional consulting firms, Student Brains pairs experienced consultant
 Write a short, concrete cold outreach email for {business_name}.
 Use the following information:
 
+Email:
+{email}
+
 Brief about business:
 {brief}
 
@@ -193,6 +196,7 @@ Business Pain Point Report:
 {pain_point_report}
 
 Format:
+- If it's a person's email greet them, if not greet the business
 - 1 opening line that shows personalization and context.
 - 2–3 tailored benefits based on their pain points (from our services: automation, redesign, consulting, bookkeeping).
 - 1 simple CTA to continue the conversation (like scheduling a quick call).
@@ -216,73 +220,3 @@ Tone: professional but approachable. No fluff, no jargon. Keep it under 150 word
         except Exception as e:
             print(e)
 
-
-    def generate_lead_score(self, place) -> float:
-        """
-        Generate a numeric lead score (1.0–5.0) for a business based on its Place data.
-        Uses structured business information such as name, status, rating, website, and reviews.
-        Returns -1.0 if parsing fails or LLM output is invalid.
-        """
-        try:
-            # Build structured business info text
-            google_map_reviews = ""
-            if place.reviews:
-                google_map_reviews = "\n".join(
-                    [f"Review {idx + 1}: {review.get('text', {}).get('text', '')}" for idx, review in enumerate(place.reviews[:5])]
-                )
-
-            info = f"""
-    Business Name: {place.display_name}
-    Status: {place.business_status}
-    Rating: {place.rating}
-    Review Count: {place.user_rating_count}
-    Review Summary: {place.review_summary or "N/A"}
-    Has Website: {"Yes" if place.website_uri else "No"}
-    Has Email: {"Yes" if place.emails else "No"}
-    Types: {", ".join(place.types)}
-    Google Reviews:
-    {google_map_reviews}
-    """
-
-            # Prompt focused on lead potential from basic data
-            prompt = f"""
-    You are an experienced business consultant evaluating how strong a potential lead is for Student Brains Consulting.
-
-    You will receive structured information about a business, including its online presence and customer feedback.
-
-    Your task:
-    - Evaluate how much **potential value** this business could get from consulting and automation services.
-    - Consider: their business status, online presence (website/email), reviews, and customer sentiment.
-    - Output **only one float number between 1.0 and 5.0**, where:
-    - 1.0 = Very low potential (closed, poor reputation, no contact info)
-    - 3.0 = Moderate potential (some weaknesses, but reachable)
-    - 5.0 = High potential (operational, reachable, strong reputation)
-
-    Respond with just the number. No explanation.
-
-    Business Info:
-    {info}
-    """
-
-            # Deterministic API call
-            response = self.base_model.responses.create(
-                model="gpt-4.1-mini",
-                input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-                temperature=0,
-            )
-
-            raw_output = response.output_text.strip()
-
-            # Extract first float or int
-            match = re.search(r"\d+(\.\d+)?", raw_output)
-            if match:
-                score = float(match.group())
-                score = max(1.0, min(score, 5.0))
-                return round(score, 1)
-            else:
-                print(f"⚠️ Could not parse numeric score from model output: {raw_output}")
-                return -1.0
-
-        except Exception as e:
-            print(f"Error generating lead score: {e}")
-            return -1.0

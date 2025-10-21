@@ -101,6 +101,7 @@ class Place:
             # Generate personalized email
             print(f'          - Email Sample')
             self.email_sample = leads_agent.generate_personalized_email(
+                self.emails[0],
                 self.display_name,
                 self.brief,
                 self.pain_point_report

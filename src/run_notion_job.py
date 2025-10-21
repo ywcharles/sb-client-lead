@@ -7,7 +7,8 @@ def main():
     print(f"Found {len(reviewed_leads)} reviewed leads.")
 
     for lead in reviewed_leads:
-        if lead.get("email_sample") and lead["email_sample"].get("email_subject"):
+        print(lead["email_sample"].get("email_body"))
+        if lead.get("email_sample") and lead["email_sample"].get("email_subject") and lead["email_sample"].get("email_body"):
             # Example: send the email here if integrated with your email system
             print(f"📧 Sending email to {lead['email']} ({lead['name']})")
 
