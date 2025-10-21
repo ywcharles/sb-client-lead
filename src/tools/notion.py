@@ -50,6 +50,7 @@ class Notion:
                 "Business Status": {"rich_text": [{"text": {"content": place.business_status or ""}}]},
                 "Lead Status": {"status": {"name": "Not Reviewed"}},
                 "Email": {"rich_text": [{"text": {"content": ", ".join(place.emails or [])}}]},
+                "Has Email Sample": {"checkbox": bool(place.email_sample)},
                 "Phone Number": {"rich_text": [{"text": {"content": place.national_phone_number or ""}}]},
                 "website": {"url": place.website_uri or None},
                 "Business Type": {"rich_text": [{"text": {"content": ", ".join(place.types or [])}}]},
@@ -59,6 +60,7 @@ class Notion:
                 "Google Maps Link": {"url": place.google_maps_uri or None},
                 "Google Place ID": {"rich_text": [{"text": {"content": place.id or ""}}]},
             },
+
             "children": [
                 self.make_toggle_block("Reviews", reviews_text),
                 self.make_toggle_block("Reviews Summary", place.review_summary),
