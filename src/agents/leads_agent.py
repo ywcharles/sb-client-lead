@@ -220,3 +220,27 @@ Tone: professional but approachable. No fluff, no jargon. Keep it under 150 word
         except Exception as e:
             print(e)
 
+    def generate_email_subject(self, business_name: str, brief: str):
+        """Generate a personalized email subject line"""
+        prompt = f"""
+Generate a compelling cold email subject line for {business_name}.
+
+Brief about business:
+{brief}
+
+Requirements:
+- Max 60 characters
+- Personalized and specific to their business
+- Intriguing but professional
+- No clickbait or spam language
+
+Return ONLY the subject line, no quotes or extra text.
+"""
+    
+        resp = self.base_model.responses.create(
+            model="gpt-4.1",
+            input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}]
+        )
+        
+        return resp.output_text.strip()
+

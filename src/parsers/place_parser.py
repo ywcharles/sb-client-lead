@@ -135,6 +135,7 @@ class PlaceParser:
             "ui_report",
             "brief",
             "pain_point_report",
+            "email_subject",  # NEW
             "email_sample"
         ]
         ws.append(headers)
@@ -162,6 +163,7 @@ class PlaceParser:
                     place.ui_report,
                     place.brief,
                     place.pain_point_report,
+                    place.email_subject,  # NEW
                     place.email_sample,
                 ]
             )
