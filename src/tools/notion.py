@@ -67,7 +67,8 @@ class Notion:
                 self.make_toggle_block("UI Report", place.ui_report),
                 self.make_toggle_block("Brief", place.brief),
                 self.make_toggle_block("Pain Point Report", place.pain_point_report),
-                self.make_toggle_block("Email Sample", place.email_sample),
+                self.make_toggle_block("Email Subject", place.email_subject), 
+                self.make_toggle_block("Email Sample", place.email_sample), 
             ],
         }
 
@@ -114,7 +115,7 @@ class Notion:
         return place_ids
 
     def fetch_reviewed_leads(self):
-        """Fetch reviewed leads with Email property and Email Sample toggle content."""
+        """Fetch reviewed leads with Email property and Email toggle contents."""
         query_url = f"https://api.notion.com/v1/data_sources/{self.data_source_id}/query"
         payload = {
             "filter": {
@@ -154,15 +155,16 @@ class Notion:
                     email_prop = page["properties"].get("Email", {}).get("rich_text", [])
                     email = email_prop[0]["text"]["content"] if email_prop else None
 
-                    # Fetch Email Sample toggle content
-                    email_sample = self._fetch_email_sample_toggle(page_id)
+                    # Fetch Email Subject + Email Sample content
+                    email_info = self._fetch_email_sample_toggle(page_id)
 
                     reviewed_leads.append({
                         "id": page_id,
                         "name": name,
                         "google_place_id": google_place_id,
                         "email": email,
-                        "email_sample": email_sample,
+                        "email_subject": email_info.get("email_subject"),
+                        "email_body": email_info.get("email_body"),
                     })
 
                 except Exception as e:
@@ -171,12 +173,13 @@ class Notion:
             has_more = data.get("has_more", False)
             next_cursor = data.get("next_cursor")
 
-        print(f"📋 Retrieved {len(reviewed_leads)} reviewed leads with Email Samples.")
+        print(f"📋 Retrieved {len(reviewed_leads)} reviewed leads with Email Subjects and Samples.")
         return reviewed_leads
 
 
+
     def _fetch_email_sample_toggle(self, page_id):
-        """Retrieve the content of the 'Email Sample' toggle block for a given page."""
+        """Retrieve the content of the 'Email Sample' and 'Email Subject' toggles for a given page."""
         blocks_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
         all_blocks = []
         next_cursor = None
@@ -198,18 +201,47 @@ class Notion:
             has_more = data.get("has_more", False)
             next_cursor = data.get("next_cursor")
 
-        # Find the "Email Sample" toggle
+        email_subject_text = None
+        email_sample_content = {"email_subject": None, "email_body": None}
+
+        # Find the "Email Subject" and "Email Sample" toggles
         for block in all_blocks:
             if block["type"] == "toggle":
                 toggle_text = "".join([
                     rt["text"]["content"] for rt in block["toggle"].get("rich_text", [])
-                ]).strip()
-                if toggle_text.lower() == "email sample":
+                ]).strip().lower()
+
+                if toggle_text == "email subject":
                     toggle_id = block["id"]
-                    return self._extract_toggle_content(toggle_id)
+                    email_subject_text = self._extract_toggle_paragraph(toggle_id)
 
-        return {"email_subject": None, "email_body": None}
+                elif toggle_text == "email sample":
+                    toggle_id = block["id"]
+                    email_sample_content = self._extract_toggle_content(toggle_id)
 
+        return {
+            "email_subject": email_subject_text or email_sample_content.get("email_subject"),
+            "email_body": email_sample_content.get("email_body")
+        }
+
+    def _extract_toggle_paragraph(self, toggle_id):
+        """Extract plain paragraph text from a simple toggle block."""
+        toggle_url = f"https://api.notion.com/v1/blocks/{toggle_id}/children"
+        res = requests.get(toggle_url, headers=self.headers)
+        if res.status_code != 200:
+            print(f"❌ Error fetching toggle children: {res.status_code} - {res.text}")
+            return None
+
+        data = res.json()
+        paragraphs = []
+        for child in data.get("results", []):
+            if child["type"] == "paragraph":
+                text_content = "".join([
+                    t["text"]["content"] for t in child["paragraph"].get("rich_text", [])
+                ]).strip()
+                if text_content:
+                    paragraphs.append(text_content)
+        return "\n".join(paragraphs) if paragraphs else None
 
     def _extract_toggle_content(self, toggle_id):
         """Extract the subject and body text from the children of an 'Email Sample' toggle block."""

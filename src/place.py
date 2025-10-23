@@ -49,6 +49,7 @@ class Place:
         self.brief = None
         self.pain_point_report = None
         self.email_sample = None
+        self.email_subject = None  # NEW: Add email subject field
         self.skip_reason = None
         
         # Step 4: Generate AI reports based on FINAL score and thresholds
@@ -57,7 +58,7 @@ class Place:
                 if self._should_generate_reports():
                     self.generate_reports(leads_agent)
                 else:
-                    print(f'        ⏭️  Skipping AI reports for {self.display_name}: {self.skip_reason}')
+                    print(f'        ⭐️  Skipping AI reports for {self.display_name}: {self.skip_reason}')
             else:
                 # Always generate if thresholds disabled
                 self.generate_reports(leads_agent)
@@ -98,9 +99,17 @@ class Place:
                 self.reviews[:5]  # Limit to 5 reviews
             )
             
+            # Generate email subject (NEW)
+            print(f'          - Email Subject')
+            self.email_subject = leads_agent.generate_email_subject(
+                self.display_name,
+                self.brief
+            )
+            
             # Generate personalized email
             print(f'          - Email Sample')
             self.email_sample = leads_agent.generate_personalized_email(
+                self.emails[0],
                 self.display_name,
                 self.brief,
                 self.pain_point_report
@@ -132,6 +141,8 @@ class Place:
             base_info += f"\n  Brief Generated: Yes"
         if self.pain_point_report:
             base_info += f"\n  Pain Point Report Generated: Yes"
+        if self.email_subject:
+            base_info += f"\n  Email Subject Generated: Yes"
         if self.email_sample:
             base_info += f"\n  Email Sample Generated: Yes"
         if self.skip_reason:
