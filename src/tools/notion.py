@@ -1,6 +1,7 @@
 import requests
 from place import Place
 from tools.keys import get_secret
+from datetime import datetime
 
 class Notion:
     def __init__(self, api_key=None, database_id=None, data_source_id=None):
@@ -59,6 +60,7 @@ class Notion:
                 "Google Maps Rating Count": {"number": place.user_rating_count or 0},
                 "Google Maps Link": {"url": place.google_maps_uri or None},
                 "Google Place ID": {"rich_text": [{"text": {"content": place.id or ""}}]},
+                "Fetched Date": {"date": {"start": datetime.utcnow().isoformat()}},
             },
 
             "children": [
